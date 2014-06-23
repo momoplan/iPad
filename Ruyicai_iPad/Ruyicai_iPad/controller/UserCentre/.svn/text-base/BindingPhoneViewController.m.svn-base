@@ -1,0 +1,170 @@
+//
+//  BindingPhoneViewController.m
+//  Ruyicai_iPad
+//
+//  Created by baozi on 13-8-8.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+#import "BindingPhoneViewController.h"
+
+@interface BindingPhoneViewController ()
+
+@end
+
+@implementation BindingPhoneViewController
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+    }
+    return self;
+}
+
+#pragma mark ----------------  ibaction methods
+- (IBAction)bingingPhoneCacelButton:(id)sender {//取消
+    [self dismissModalViewControllerAnimated:YES];
+}
+- (IBAction)bingingPhoneConfirmButton:(id)sender {//确定
+    
+    if (_bingPhoneTextField.text.length != 11) {
+        [self showAlertWithMessage:@"请输入正确的手机号！"];
+    }
+    
+    NSMutableDictionary * mDic =[[NSMutableDictionary alloc]init];
+    [mDic setObject:@"updateUserInfo" forKey:@"command"];
+    [mDic setObject:@"bindPhoneSecurityCode" forKey:@"type"];
+    [mDic setObject:[UserLoginData sharedManager].userNo forKey:@"userno"];
+    [mDic setObject:_bingPhoneTextField.text forKey:@"bindPhoneNum"];
+    [[RYCNetworkManager sharedManager] netRequestStartWith:mDic withRequestType:ASINetworkReqestTypeBindPhoneSecurity showProgress:YES];
+}
+- (IBAction)backBingPhoneButton:(id)sender {//返回验证界面
+    [_bingPhoneView removeFromSuperview];
+    [self.view addSubview:_sendAuthcodeView];
+}
+
+- (IBAction)againAchieveAuthButton:(id)sender {//重新获取
+    [self bingingPhoneConfirmButton:sender];
+}
+- (IBAction)ImmediateBingButton:(id)sender {//立即绑定
+    NSMutableDictionary * mDic =[[NSMutableDictionary alloc]init];
+    [mDic setObject:@"updateUserInfo" forKey:@"command"];
+    [mDic setObject:@"bindPhone" forKey:@"type"];
+    [mDic setObject:[UserLoginData sharedManager].userNo forKey:@"userno"];
+    [mDic setObject:_bingPhoneTextField.text forKey:@"bindPhoneNum"];
+    [mDic setObject:_bingAuthTextField.text forKey:@"securityCode"];
+    [[RYCNetworkManager sharedManager] netRequestStartWith:mDic withRequestType:ASINetworkReqestTypeBindPhone showProgress:YES];
+}
+
+#pragma mark --------- textField delegate
+- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string
+{
+    if (_bingPhoneTextField == textField) {
+        if (range.length >11) {
+            return NO;
+        }
+    }
+    
+    return YES;
+}
+- (BOOL)textFieldShouldBeginEditing:(UITextField *)textField
+{
+    return YES;
+}
+- (BOOL)textFieldShouldEndEditing:(UITextField *)textField
+{
+    return YES;
+}
+- (BOOL)textFieldShouldReturn:(UITextField *)textField
+{
+    return YES;
+}
+- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
+{
+    [_bingPhoneTextField resignFirstResponder];
+    [_bingAuthTextField resignFirstResponder];
+}
+#pragma mark ----------- view methods
+- (void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(requestComplete:) name:KRequestCompNotName object:nil];
+}
+- (void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:KRequestCompNotName object:nil];
+    
+}
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    // Do any additional setup after loading the view from its nib.
+    [_bingPhoneView removeFromSuperview];
+    
+    [self.view addSubview:_sendAuthcodeView];
+    _sendAuthcodeView.center = CGPointMake(500, 300);
+}
+
+#pragma mark ------------ notification methods
+- (void)requestComplete:(NSNotification*)notification
+{
+    NSDictionary* dataDic = (NSDictionary*)notification.userInfo;
+    DLog(@" 绑定手机号   -------- %@",dataDic);
+    int reqType = [[dataDic objectForKey:KRequestTypeKey] integerValue];
+    switch (reqType) {
+        case ASINetworkReqestTypeBindPhoneSecurity://获取手机验证号码
+        {
+            NSString * errorCode = KISDictionaryHaveKey(dataDic, @"error_code");
+                if ([errorCode isEqualToString:@"0000"]) {//发送成功
+                [_sendAuthcodeView removeFromSuperview];
+                [self.view addSubview:_bingPhoneView];
+                }else{
+                [self showAlertWithMessage:@"发送失败，请重新发送"];
+                }
+        }
+            break;
+        case ASINetworkReqestTypeBindPhone://绑定手机
+        {
+             NSString * errorCode = KISDictionaryHaveKey(dataDic, @"error_code");
+            if ([errorCode isEqualToString:@"0000"]) {
+                //绑定 成功
+                [self dismissModalViewControllerAnimated:YES];
+                [self showAlertWithMessage:@"绑定成功"];
+                [self.delegate bingingPhonebingSucceed];
+            }else
+            {
+                [self showAlertWithMessage:@"绑定失败"];
+            }
+            
+        }
+            break;
+        default:
+            break;
+    }
+}
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+- (void)dealloc {
+    self.delegate = nil;
+
+    [_bingPhoneTextField release];
+    [_sendAuthcodeView release];
+    [_bingPhoneView release];
+    [_bingAuthTextField release];
+    [super dealloc];
+}
+- (void)viewDidUnload {
+    [self setBingPhoneTextField:nil];
+    [self setSendAuthcodeView:nil];
+    [self setBingPhoneView:nil];
+    [self setBingAuthTextField:nil];
+    [super viewDidUnload];
+}
+@end

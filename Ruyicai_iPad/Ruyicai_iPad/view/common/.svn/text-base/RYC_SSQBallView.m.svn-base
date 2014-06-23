@@ -1,0 +1,334 @@
+//
+//  RYC_SSQBallView.m
+//  Ruyicai_iPad
+//
+//  Created by baozi on 13-7-2.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+
+#import "RYC_SSQBallView.h"
+
+@interface RYC_SSQBallView ()
+{
+    NSMutableArray *ballStateArray;//选球状态 数组
+    int ball_selectNum;//选择的数目
+    int ball_selectMaxNum;//最大可选数目
+    int ball_selectBallCount;//至少应该选择的数目
+    UILabel *messLabel;//选球提醒
+    
+    UIView * numListView;//机选数目设置view
+    int ball_numSelectValue;//机选 已选数目
+    int ball_startNum;//机选开始 数目
+    int ball_auto_num;//机选总数
+    UIButton *  ball_numButton;// 显示机选数目 按钮
+    
+    int ball_select_PerLine; //每行的 球数
+    
+    int  type_ball;//球类型
+    int totalBallNum; //总球数
+}
+
+@end
+
+#define BALL_RECT_VALUE 42
+#define BALL_VERTICAL_SPACE 4
+#define TAG_BALL_BASE  1000
+#define TAG_NUM_BUTTON 1100
+
+@implementation RYC_SSQBallView
+@synthesize delegate;
+- (id)initWithFrame:(CGRect)frame
+{
+    self = [super initWithFrame:frame];
+    if (self) {
+        // Initialization code
+        
+    }
+    return self;
+}
+- (void)dealloc{
+    [super dealloc];
+    [ball_numButton release];
+    [ballStateArray release];
+    [messLabel release];
+}
+
+#pragma mark  -------------------- 外部接口方法
+- (void)initView
+{
+//    //
+//    UILabel *redBallTitle = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, 300, 30)];
+//    redBallTitle.text =   @"蓝球区（至少选择1个）";
+//    redBallTitle.backgroundColor = [UIColor clearColor];
+//    [self addSubview:redBallTitle];
+//    [redBallTitle release];
+//    
+//    [self numberOfRedBall:16 withPerLine:12 selectBallCount:1];
+//    
+//
+//    [self ballAutoSelectWithStart:1 maxNum:16 perLine:12];
+
+}
+- (void)clearBallState
+{
+    for (int i=0; i<ballStateArray.count; i++) {
+        [ballStateArray replaceObjectAtIndex:i withObject:@"0"];
+    }
+    [self redBallChangeState:nil];
+}
+#pragma mark ------------------ 排版
+
+///至少选择 最大选择 每行显示
+- (void)ballAutoSelectWithStart:(int)startNum maxNum:(int)autoNum perLine:(int)perLine
+
+{
+    ball_startNum = startNum;
+    ball_auto_num = autoNum;
+    ball_select_PerLine  = perLine;
+    ball_numSelectValue = startNum;
+    ball_selectMaxNum = autoNum;
+    
+    ball_numButton = [[UIButton alloc] initWithFrame:CGRectMake(387, 3, 49, 35)];
+    [ball_numButton setTitle:[NSString stringWithFormat:@"%d个", ball_startNum ] forState:UIControlStateNormal];
+    [ball_numButton setBackgroundColor:[UIColor clearColor]];
+    [ball_numButton setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+    [ball_numButton setBackgroundImage:[UIImage imageNamed: @"random_num_normal.png"] forState:UIControlStateNormal];
+    [ball_numButton setBackgroundImage: [UIImage imageNamed: @"random_num_click.png"] forState:UIControlStateHighlighted];
+    [ball_numButton addTarget:self action:@selector(numButtonClick:) forControlEvents:UIControlEventTouchUpInside];
+    [self addSubview:ball_numButton];
+    
+    UIButton*  jixuan_button = [[UIButton alloc] initWithFrame:CGRectMake(446, 3, 99, 35)];
+    [jixuan_button setTitle:@"机选号码" forState:UIControlStateNormal];
+    [jixuan_button setBackgroundColor:[UIColor clearColor]];
+    [jixuan_button setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+    [jixuan_button setBackgroundImage:[UIImage imageNamed:@"random_button_normal.png"] forState:UIControlStateNormal];
+    [jixuan_button setBackgroundImage:[UIImage imageNamed:@"random_button_click.png"] forState:UIControlStateHighlighted];
+    [jixuan_button addTarget:self action:@selector(jiXuanButtonClick:) forControlEvents:UIControlEventTouchUpInside];
+    [self addSubview:jixuan_button];
+    [jixuan_button release];
+    
+    int lineNum = ball_auto_num/ball_select_PerLine + (ball_auto_num%ball_select_PerLine == 0 ? 0 : 1);
+    
+    numListView = [[UIView alloc] initWithFrame:CGRectMake(5, 30, 550, 300)];
+    [numListView setBackgroundColor:[UIColor clearColor]];
+    UIImageView*  bg_image = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, numListView.frame.size.width, 50*lineNum)];
+    bg_image.image = [UIImage imageNamed:@"randomnum_bg.png"];
+    [numListView addSubview:bg_image];
+    [bg_image release];
+    [self addSubview:numListView];
+    
+    for (int i = 0; i <=ball_auto_num-ball_startNum; i++)
+    {
+        CGRect ballFrame = CGRectMake( 3 + ((BALL_RECT_VALUE+BALL_VERTICAL_SPACE) * (i % ball_select_PerLine)),
+                                      10+(BALL_RECT_VALUE+BALL_VERTICAL_SPACE)*(i/ball_select_PerLine),
+                                      BALL_RECT_VALUE, BALL_RECT_VALUE);
+        UIButton *button = [[UIButton alloc] initWithFrame:ballFrame];
+        [button setBackgroundImage:[UIImage imageNamed: @"num_bg.png"] forState:UIControlStateNormal];
+		[button setTitle:[NSString stringWithFormat:@"%d", (i + ball_startNum)] forState:UIControlStateNormal];
+        [button setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+        button.titleLabel.font = [UIFont boldSystemFontOfSize:15];
+		[button addTarget:self action:@selector(pressedNumButton:) forControlEvents:UIControlEventTouchUpInside];
+		button.tag = TAG_NUM_BUTTON + i;
+		[numListView addSubview:button];
+        [button release];
+    }
+    numListView.hidden = YES;
+}
+
+- (void)numberOfRedBall:(int)num  withPerLine:(int)perLine selectBallCount:(int)count kindBall:(int)ballKind headTitle:(NSString *)headText
+{
+    UILabel *redBallTitle = [[UILabel alloc]initWithFrame:CGRectMake(0, 0, 300, 30)];
+    redBallTitle.backgroundColor = [UIColor clearColor];
+    [self addSubview:redBallTitle];
+    [redBallTitle release];
+    
+    if (Red_Ball == ballKind) {
+        redBallTitle.text = [NSString stringWithFormat: @"%@（至少选择%d个）",headText,count]  ;
+    }else{
+        redBallTitle.text = [NSString stringWithFormat: @"%@（至少选择%d个）",headText,count]  ;
+    }
+
+    ballStateArray = [[NSMutableArray alloc]init]; //状态数字初始化
+    ball_selectBallCount = count;
+    ball_selectNum = 0;
+    type_ball =ballKind;
+    totalBallNum = num;
+    
+    for (int i=0; i<num; i++) { // 利用for 循环来 创建球区
+        UIButton * button =[UIButton buttonWithType:UIButtonTypeRoundedRect];
+        
+        button.frame = CGRectMake(10 + ((BALL_RECT_VALUE+BALL_VERTICAL_SPACE) *(i%perLine)), 40 + ((i/perLine)*(BALL_RECT_VALUE+BALL_VERTICAL_SPACE)), BALL_RECT_VALUE, BALL_RECT_VALUE);//根据 按钮大小 来排版
+        [button setBackgroundImage:[UIImage imageNamed:@"ball_gray.png"] forState:UIControlStateNormal];//默认按钮图片
+        [button setTitle:[NSString stringWithFormat:@"%d",i+1] forState:UIControlStateNormal];//显示的数字
+        [button setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];//文字颜色
+        button.titleLabel.font = [UIFont boldSystemFontOfSize:15];//文字大小
+        button.tag = TAG_BALL_BASE + i;//tag 标示
+		[button addTarget:self action:@selector(pressedBallButton:) forControlEvents:UIControlEventTouchUpInside];//绑定事件
+		
+		[self addSubview:button];//加载到视图上
+        
+        [ballStateArray addObject:@"0"];//标示数组添加信息
+    }
+}
+/* 防止选择相同的号码 */
+- (void)ballViewDifferentNumber:(NSMutableArray *)numArray
+{
+    if (numArray.count == 0) {
+        return;
+    }
+
+    DLog(@"ballStateArray %@  ",numArray);
+
+    int same = 0;
+    for (int i=0; i<numArray.count; i++) {
+        int index = [[numArray objectAtIndex:i] intValue];
+        if ([[ballStateArray objectAtIndex:index-1]isEqualToString:@"0"]) {
+            [ballStateArray replaceObjectAtIndex:index-1 withObject:@"1"];
+        }else{
+            [ballStateArray replaceObjectAtIndex:index-1 withObject:@"0"];
+        }
+        same ++;
+    }
+
+    if (same !=0) {
+        [self redBallChangeState:nil];      
+    }
+}
+#pragma mark-------------------- button methods
+- (void)numButtonClick:(id)sender
+{
+    numListView.hidden = NO;
+}
+/*  机选彩球*/
+- (void)jiXuanButtonClick:(id)sender
+{
+    
+    ballStateArray = [self randomBallWithMax:totalBallNum selectNum:ball_numSelectValue];
+    if (![self isIncludeEffectiveNumber:ballStateArray]) {
+        return;
+    }
+    [self redBallChangeState:nil];
+    
+}
+/* 判断是否有有效彩球 */
+- (BOOL)isIncludeEffectiveNumber:(NSArray *)array
+{
+    for (NSString * str in array) {
+        if ([str isEqualToString:@"1"]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+- (void)pressedNumButton:(id)sender
+{
+    UIButton *btn = (UIButton *)sender;
+    numListView.hidden = YES;
+    ball_numSelectValue = btn.tag - TAG_NUM_BUTTON +ball_startNum;
+    [ball_numButton setTitle:[NSString stringWithFormat:@"%d个", ball_numSelectValue] forState:UIControlStateNormal];
+    ball_selectNum = ball_numSelectValue;
+    ballStateArray = [self randomBallWithMax:totalBallNum selectNum:ball_numSelectValue];
+    if (ballStateArray.count == 0) {
+        return;
+    }
+    [self redBallChangeState:nil];
+}
+
+// 红球区 按钮 方法
+- (void)pressedBallButton:(id)sender
+{
+    
+    
+    UIButton *ballButton = (UIButton *)sender;//取到 点击按钮
+    for (int i=0; i<[ballStateArray count]; i++) {//遍历 状态数组
+        if (ballButton.tag == TAG_BALL_BASE + i) {//判断 为点击按钮
+            
+            if ([[ballStateArray objectAtIndex:i] isEqualToString:@"1"]) {//是否已经为红色状态
+                [ballStateArray replaceObjectAtIndex:i withObject:@"0"];//改变状态为灰色
+                ball_selectNum--;//选择数目减少
+            }else
+            {
+                if (ball_selectNum < ball_selectMaxNum) {//求选择不能超过 最大可选数
+                    
+                    [ballStateArray replaceObjectAtIndex:i withObject:@"1"];//改变状态表示为红色
+                    ball_selectNum ++;//球数增加
+                }
+                
+            }
+        }
+    }
+    
+    
+    /*  
+      根据选球情况 提醒用户 信息
+     */
+    if (messLabel) {//全局变量
+        [messLabel release];//释放
+        //        messLabel = nil;
+    }
+    messLabel =[[UILabel alloc]initWithFrame:CGRectMake(0, 20, 125, 15)];//实例化 设置左边尺寸
+    messLabel.backgroundColor = [UIColor grayColor];//背景颜色
+    messLabel.textColor = [UIColor whiteColor];//字体颜色
+    messLabel.textAlignment = UITextAlignmentCenter;//居中显示
+    messLabel.font = [UIFont systemFontOfSize:12];//字号
+    [self addSubview:messLabel];//加到视图上
+    if (ball_selectMaxNum - ball_selectNum ==0) {//判断 是否大于最多显示
+        messLabel.text =@"该区不能再选了";//提示信息
+    }
+    else if (ball_selectBallCount - ball_selectNum >=0){//判断是否达到最少选球数
+        messLabel.text = [NSString stringWithFormat:@"至少还要选 %d 个球",ball_selectBallCount - ball_selectNum];//提示信息
+        
+    }else
+    {
+        messLabel.text = [NSString stringWithFormat:@"最多还可以选 %d 个球",ball_selectMaxNum - ball_selectNum];//提示信息
+    }
+    [[self class] cancelPreviousPerformRequestsWithTarget:self selector:@selector(hideMessView) object:nil];//取消该方法的调用
+    [self performSelector:@selector(hideMessView) withObject:nil afterDelay:1.0f];//延时消除
+    
+    [self redBallChangeState:nil];//根据状态表示 改变红球颜色
+}
+///根据状态表示 改变红球颜色
+- (void)redBallChangeState:(NSArray *)stateArray
+{
+    for (int i = 0; i < [ballStateArray count]; i++)//遍历所有红球
+    {
+        UIButton *tmp = (UIButton *)[self viewWithTag:(TAG_BALL_BASE + i)];//根据tag 确定要修改的按钮
+        if ([[ballStateArray objectAtIndex:i] isEqualToString:@"1"]) {//根据标示 设置不同的颜色
+            if (type_ball == Blue_Ball) {
+                [tmp setBackgroundImage:[UIImage imageNamed:@"ball_blue.png"] forState:UIControlStateNormal];//换成红色图片
+                [tmp setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];//字体
+            }else{
+                [tmp setBackgroundImage:[UIImage imageNamed:@"ball_red.png"] forState:UIControlStateNormal];//换成红色图片
+                [tmp setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];//字体
+            }
+        
+            
+        }else{
+            [tmp setBackgroundImage:[UIImage imageNamed:@"ball_gray.png"] forState:UIControlStateNormal];//灰球
+            [tmp setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];//字体颜色
+        }
+		
+        tmp.titleLabel.font = [UIFont boldSystemFontOfSize:15];//字体大小
+        
+	}
+    [self.delegate ballSelcetResultArray:ballStateArray ballView:self];
+}
+/// 移除 提醒label
+
+- (void)hideMessView
+{
+    messLabel.hidden=YES;
+    [messLabel removeFromSuperview];
+}
+
+/*
+// Only override drawRect: if you perform custom drawing.
+// An empty implementation adversely affects performance during animation.
+- (void)drawRect:(CGRect)rect
+{
+    // Drawing code
+}
+*/
+
+@end

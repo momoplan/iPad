@@ -1,0 +1,98 @@
+//
+//  RYCNetworkManager.h
+//  Ruyicai_iPad
+//
+//  Created by baozi on 13-7-4.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+/*
+ 服务器 请求集合类 所有和服务器交互 必须通过改类 处理
+ */
+#import <Foundation/Foundation.h>
+//公共头文件
+#import "RYCCommon.h"
+//asi http 请求
+#import "ASIFormDataRequest.h"
+#import "ASIHTTPRequest.h"
+// SBjson 解析
+#import "JSON.h"
+#import "SBJsonWriter.h"
+#import "SBJsonParser.h"
+// AES 加密
+#import "NSData-AES.h"
+// base64
+#import "GTMBase64.h"
+// 判断 网络状态
+#import "Reachability.h"
+// 登陆 转轮
+#import "ActivityView.h"
+
+#define KRequestTypeKey  @"RequestTypeKey"
+#define KRequestCompNotName  @"CompNotificationName"
+
+typedef enum
+{
+    NET_APP_BASE = 0,
+	NET_APP_LOGIN,           //登陆
+    NET_APP_REGISTER,        //注册
+    NET_APP_QUERY_BALANCE,   //余额查询
+    //	NET_APP_SUBMIT_LOT,      //投注
+    NET_APP_QUERY_LOT_WIN,   //中奖查询
+    NET_APP_QUERY_LOT_BET,   //投注查询
+    NET_APP_QUERY_TRACK,     //追号查询
+    NET_APP_QUERY_GIFT,      //赠送查询
+    NET_APP_ACCOUNT_DETAIL,  //账户明细
+    NET_APP_GET_CASH,        //账户提现
+    NET_APP_QUERY_DNA,       //银行卡电话充值
+    NET_APP_JOIN_ACTION,     //加入合买
+    NET_APP_BET_CASE_LOT_LOGIN,  //合买登陆
+    NET_APP_AUTO_ORDER_LOGIN,  //自动跟单登陆
+    NET_APP_BIND_CERTID, //绑定身份证
+    NET_APP_BIND_PHONE, //绑定手机
+    NET_APP_USER_CENTER,//用户中心
+    //    NET_APP_USER_CENTER2,//帮助里的用户中心
+    NET_APP_FEED_BACK,//用户反馈
+    
+    //    NET_APP_JOIN_CUSTOMBAR_USER_CENTER,//
+    //    NET_APP_HELP_SET,//更多，设置
+} NetAppType;
+typedef enum
+{
+    NET_LOT_BASE = 0,//玩法查询
+    NET_LOT_MISSDATE,
+    NET_LOT_SHOUYILV_BATCH,
+    NET_LOT_SHOUYILV_COMPUTE,
+    NET_LOT_HISTORY_TRACK,
+    NET_QUXIAO,
+    NET_LOTTERY_TREND,//走势图开奖号码
+    NET_LOTTERY_HISTORY,//历史开奖号码
+    NET_DONT_RESULT,//不需要返回值，不解析结果
+    NET_LOTTERY_INFOR,//开奖公告
+    NET_DONT_SHOWALTER,//不要没结果时弹框提示
+}NetLotType;
+@protocol RYCNetworkManagerDelegate <NSObject>
+
+@optional
+- (void)netSuccessWithResult:(NSDictionary*)resultDic tag:(NSInteger)requestTag;
+- (void)netFailed:(id)sender;
+
+@end
+
+@interface RYCNetworkManager : NSObject
+{
+    ActivityView* activityView;
+}
+
+@property (nonatomic,assign)id<RYCNetworkManagerDelegate>netDelegate;
+@property (assign) NetLotType netLotType;
+/*  单例  */
++ (RYCNetworkManager *)sharedManager;
+// 获取 系统信息
+- (NSMutableDictionary*)getCommonCookieDictionary;
+// 请求发起接口
+- (BOOL)netRequestStartWith:(NSMutableDictionary *)resultDic  withRequestType:(int)netRequestType showProgress:(BOOL)isShowProgress;
+
+- (void)showMessage:(NSString*)message withTitle:(NSString*)title buttonTitle:(NSString*)buttonTitle;
+
+@end

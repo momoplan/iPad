@@ -1,0 +1,24 @@
+//
+//  UserLoginData.h
+//  Ruyicai_iPad
+//
+//  Created by Zhang Xiaofeng on 13-7-23.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+
+#define KSaveUserNameKey        @"UserName"
+#define KSaveRandomNumberKey    @"RandomNum"
+#define kSaveRandomSate         @"RandomState"//为1为自动登陆
+
+@interface UserLoginData : NSObject
+
+@property(nonatomic, assign)BOOL      hasLogin;//是否已经登陆
+@property(nonatomic, retain)NSString* userPass;//密码
+@property(nonatomic, retain)NSString* userNo;//编号
+
++ (UserLoginData *)sharedManager;
+- (void)saveUserName:(NSString*)userName AndrandomNumber:(NSString*)randomNum;//保存用户名和自动登陆随机码
+
+@end

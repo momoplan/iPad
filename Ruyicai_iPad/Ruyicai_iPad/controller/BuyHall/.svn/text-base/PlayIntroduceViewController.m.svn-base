@@ -1,0 +1,113 @@
+//
+//  PlayIntroduceViewController.m
+//  Ruyicai_iPad
+//
+//  Created by baozi on 13-7-17.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+#import "PlayIntroduceViewController.h"
+
+@interface PlayIntroduceViewController ()
+
+@end
+
+@implementation PlayIntroduceViewController
+@synthesize delegate;
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+    }
+    return self;
+}
+- (void)dealloc{
+    [super dealloc];
+}
+- (void)viewWillAppear:(BOOL)animated
+{
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(querySampleNetOK:) name:KRequestCompNotName object:nil];
+
+}
+- (void)viewWillDisappear:(BOOL)animated
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:KRequestCompNotName object:nil];
+}
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+	// Do any additional setup after loading the view.
+    self.view.backgroundColor =[UIColor whiteColor];
+    UIButton * backBtn =[UIButton buttonWithType:UIButtonTypeRoundedRect];
+    backBtn.frame = CGRectMake(10, 10, 60, 40);
+    [backBtn setTitle:@"返回" forState:UIControlStateNormal];
+    [backBtn addTarget:self action:@selector(playIntroduceBack:) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:backBtn];
+    
+    UILabel * titleLabel =[[UILabel alloc]initWithFrame:CGRectMake(200, 10, 100, 40)];
+    titleLabel.text = @"玩法介绍";
+    [self.view addSubview:titleLabel];
+    
+    
+    NSMutableDictionary*  tempDic = [NSMutableDictionary dictionaryWithCapacity:1];
+    [tempDic setObject:@"information" forKey:@"command"];
+    [tempDic setObject:@"playIntroduce" forKey:@"newsType"];
+    [tempDic setObject:kLotNoSSQ   forKey:@"lotno"];
+    
+    [RYCNetworkManager sharedManager].netLotType = NET_LOT_BASE;
+    [[RYCNetworkManager sharedManager] netRequestStartWith:tempDic withRequestType:ASINetworkReqestTypeGetLotDate showProgress:YES];
+}
+- (void)playIntroduceBack:(id)sender
+{
+    [self.delegate playIntroduceViewDisappear:self];
+}
+#pragma mark ------------- notification
+- (void)querySampleNetOK:(NSNotification *)notification
+{
+    NSDictionary* dataDic = (NSDictionary*)notification.userInfo;
+    int reqType = [[dataDic objectForKey:KRequestTypeKey] integerValue];
+    switch (reqType) {
+        case ASINetworkReqestTypeGetLotDate:
+            [self playMethodsIntroduceView:dataDic];
+            break;
+            
+        default:
+            break;
+    }
+   }
+- (void)playMethodsIntroduceView:(NSDictionary *)mDic
+{
+    NSDictionary * parserDict = mDic;
+    NSString* dict = [parserDict objectForKey:@"title"];
+    NSString* content = [parserDict objectForKey:@"introduce"];
+    
+    UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(10, 50, self.view.frame.size.width-20, 35)];
+    label.textAlignment = UITextAlignmentCenter;
+    label.text = dict;
+    label.font =[UIFont systemFontOfSize:18];
+    label.backgroundColor = [UIColor clearColor];
+    [label setTextColor:[UIColor brownColor]];
+    [self.view addSubview:label];
+    [label release];
+    
+    UITextView *textView = [[UITextView alloc] initWithFrame:CGRectMake(10, 85, self.view.frame.size.width-20, self.view.frame.size.height-100)];
+    textView.text = content;
+    textView.font = [UIFont systemFontOfSize:18];
+    textView.editable = NO;
+    [textView setTextColor:[UIColor blackColor]];
+    [textView setFont:[UIFont systemFontOfSize:14]];
+    [textView setBackgroundColor:[UIColor clearColor]];
+    [self.view addSubview:textView];
+    [textView release];
+    
+
+}
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+@end

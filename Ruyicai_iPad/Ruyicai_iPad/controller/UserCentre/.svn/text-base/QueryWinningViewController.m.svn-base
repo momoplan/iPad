@@ -1,0 +1,248 @@
+//
+//  QueryWinningViewController.m
+//  Ruyicai_iPad
+//
+//  Created by baozi on 13-7-25.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+#import "QueryWinningViewController.h"
+
+@interface QueryWinningViewController ()
+
+@end
+
+@implementation QueryWinningViewController
+@synthesize  queryWinDataArray;
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+    }
+    return self;
+}
+- (void)dealloc
+{
+    [super dealloc];
+    self.delegate = nil;
+    [queryDetailView release];
+    [winTabelView release];
+
+    [queryWinDataArray release],queryWinDataArray = nil;
+}
+- (void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(requestComplete:) name:KRequestCompNotName object:nil];
+}
+- (void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:KRequestCompNotName object:nil];
+    
+}
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+	// Do any additional setup after loading the view.
+    self.view.backgroundColor =[UIColor darkGrayColor];
+    [self queryWinTitleView];
+    [self queryWinTabelView];//中奖列表
+    
+     queryDetailView =[[UIScrollView alloc]initWithFrame:CGRectMake(550, 100, 360, 600)];
+    
+    /* 中奖查询 */
+    NSMutableDictionary * mDic =[[NSMutableDictionary alloc]init];
+    [mDic setObject:@"QueryLot" forKey:@"command"];
+    [mDic setObject:@"win" forKey:@"type"];
+    [mDic setObject:@"11" forKey:@"maxresult"];
+    [mDic setObject:@"0" forKey:@"pageindex"];
+    [mDic setObject:[UserLoginData sharedManager].userNo forKey:@"userno"];
+    [[RYCNetworkManager sharedManager] netRequestStartWith:mDic withRequestType:ASINetworkRequestTypeQueryLotWin showProgress:YES];
+}
+#pragma mark --------- view
+/*  标题 */
+- (void)queryWinTitleView
+{
+    UILabel *titleLabel =[[UILabel alloc]initWithFrame:CGRectMake(400, 10, 150, 40)];
+    titleLabel.text = @"中奖查询";
+    titleLabel.backgroundColor =[UIColor clearColor];
+    titleLabel.textAlignment = UITextAlignmentCenter;
+    titleLabel.textColor =[UIColor whiteColor];
+    titleLabel.font =[UIFont systemFontOfSize:25];
+    [self.view addSubview:titleLabel];
+    [titleLabel release];
+    
+    UIButton *integralBackBtn =[UIButton buttonWithType:UIButtonTypeCustom];
+    integralBackBtn.frame = CGRectMake(0, 0, 76, 77);
+    [integralBackBtn setImage:[UIImage imageNamed:@"narBack.png"] forState:UIControlStateNormal];
+    [integralBackBtn addTarget:self action:@selector(queryWinBackButtonClick:) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:integralBackBtn];
+}
+/*  中奖信息列表 */
+- (void)queryWinTabelView
+{
+    winTabelView =[[UITableView alloc]initWithFrame:CGRectMake(0, 75, 910, 650) style:UITableViewStylePlain];
+    winTabelView.delegate = self;
+    winTabelView.dataSource = self;
+    winTabelView.separatorStyle =UITableViewCellSeparatorStyleNone;
+    [self.view addSubview:winTabelView];
+}
+#pragma mark ---------- RYCNetManager delegate
+- (void)requestComplete:(NSNotification*)notification
+{
+    NSDictionary* dataDic = (NSDictionary*)notification.userInfo;
+    DLog(@"中奖 查询 -------- %@",dataDic);
+    int reqType = [[dataDic objectForKey:KRequestTypeKey] integerValue];
+    switch (reqType) {
+        case ASINetworkRequestTypeQueryLotWin://
+        {
+            [self queryWinnTabelDataDic:dataDic];
+        }
+            break;
+        default:
+            break;
+    }
+}
+/* 请求返回数据 数组化  */
+- (void)queryWinnTabelDataDic:(NSDictionary *)mDic
+{
+    [self.queryWinDataArray removeAllObjects];
+    
+    NSMutableArray *nArray =[[NSMutableArray alloc]init];
+    NSArray * result =[mDic objectForKey:@"result"];
+    for (int i=0; i<result.count; i++) {
+        NSDictionary *dic =[result objectAtIndex:i];
+        QueryWinningCellModel *model =[[QueryWinningCellModel alloc]init];
+        model.orderId =[dic objectForKey:@"orderId"];
+        model.lotNo = [dic objectForKey:@"lotNo"];
+        model.lotName =[dic objectForKey:@"lotName"];
+        model.lotMulti =[dic objectForKey:@"lotMulti"];
+        model.betNum =[dic objectForKey:@"betNum"];
+        model.betCode =[dic objectForKey:@"betCode"];
+        model.amount =[dic objectForKey:@"amount"];
+        model.winAmount = [dic objectForKey:@"winAmount"];
+        model.batchCode =[dic objectForKey:@"batchCode"];
+        model.sellTime = [dic objectForKey:@"sellTime"];
+        model.cashTime =[dic objectForKey:@"cashTime"];
+        model.winCode =[dic objectForKey:@"winCode"];
+        [nArray addObject:model];
+        [model release];
+    }
+    self.queryWinDataArray = [nArray retain];
+    [nArray release];
+    [winTabelView reloadData];
+}
+/* 中奖详情 显示 */
+- (void)queryWinQueryDetailView:(QueryWinningCellModel *)model
+{
+    queryDetailView.backgroundColor =[UIColor clearColor];
+    [self.view addSubview:queryDetailView];
+    
+    for (UIView *view in queryDetailView.subviews) {
+        [view removeFromSuperview];
+        view =nil;
+    }
+    
+    UIImageView *imgView =[[UIImageView alloc]initWithImage:[UIImage imageNamed:@"queryDetailBg.png"]];
+    imgView.frame = CGRectMake(0, 0, queryDetailView.frame.size.width, queryDetailView.frame.size.height);
+    [queryDetailView addSubview:imgView];
+    [imgView release];
+    
+    UIButton *closeBtn =[UIButton buttonWithType:UIButtonTypeCustom];
+    closeBtn.frame = CGRectMake(305, 0, 55, 55);
+    [closeBtn setImage:[UIImage imageNamed:@"queryclose.png"] forState:UIControlStateNormal];
+    [closeBtn addTarget:self action:@selector(queryDetailCloseButton:) forControlEvents:UIControlEventTouchUpInside];
+    [queryDetailView addSubview:closeBtn]; //125162466
+    
+    UILabel *winTitLabel =[[UILabel alloc]initWithFrame:CGRectMake(0, 0, queryDetailView.frame.size.width, 55)];
+    winTitLabel.text = @"中奖详情";
+    winTitLabel.textAlignment = UITextAlignmentCenter;
+    winTitLabel.backgroundColor =[UIColor clearColor];
+    [queryDetailView addSubview:winTitLabel];
+    [winTitLabel release];
+    
+    NSArray * winTetArray =[[NSArray alloc]initWithObjects:@"彩种类型:",@"期号:",@"订单号:",@"投注时间",@"兑奖时间:",@"倍数:",@"注数:",@"投注金额:",@"中奖金额:",@"开奖号码:",@"投注内容:", nil];
+    DLog(@"%@ \n %@\n %@ %@ %@ %@ %@ %@ %@ %@ ",model.lotName,model.batchCode,model.orderId,model.sellTime,model.cashTime,model.lotMulti,model.betNum,model.amount,model.winAmount,model.winCode)
+//    NSArray * messArray =@[model.lotName,model.batchCode,model.orderId,model.sellTime,model.cashTime,model.lotMulti,model.betNum,model.amount,model.winAmount,model.winCode,@"",];
+   
+    NSArray * messArray =[[NSArray alloc]initWithObjects:model.lotName, model.batchCode, model.orderId, model.sellTime, model.cashTime ,model.lotMulti,model.betNum, model.amount, model.winAmount, model.winCode, @"",nil];
+    
+    DLog(@"%d %d %@",winTetArray.count,messArray.count,messArray);
+    for (int i=0; i<winTetArray.count; i++) {
+        UILabel *detailLabel =[[UILabel alloc]initWithFrame:CGRectMake(10, 60+(40*i), 100, 25)];
+        detailLabel.text = [winTetArray objectAtIndex:i];
+        detailLabel.backgroundColor =[UIColor clearColor];
+        detailLabel.textColor =[UIColor blueColor];
+        detailLabel.textAlignment = UITextAlignmentCenter;
+        [queryDetailView addSubview:detailLabel];
+        [detailLabel release];
+        
+        UILabel *messLabel =[[UILabel alloc]initWithFrame:CGRectMake(110, detailLabel.frame.origin.y, 200, 25)];
+        messLabel.backgroundColor =[UIColor clearColor];
+        messLabel.text =[messArray objectAtIndex:i];
+        [queryDetailView addSubview:messLabel];
+        [messLabel release];
+    }
+    [winTetArray release];
+    [messArray release];
+    
+    UITextView *contentTextView =[[UITextView alloc]initWithFrame:CGRectMake(110, 460, 200, 70)];
+    contentTextView.text = model.betCode;
+    contentTextView.editable = NO;
+    contentTextView.font = [UIFont systemFontOfSize:17];
+    [queryDetailView addSubview:contentTextView];
+    [contentTextView release];
+
+}
+#pragma mark ----------- methods
+/* 返回 释放 */
+- (void)queryWinBackButtonClick:(id)sender
+{
+    [self.delegate queryWinningViewDisappear:self];
+    
+}
+#pragma mark- ------------ queryWin delegate
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return self.queryWinDataArray.count;
+}
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    return 88;
+}
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    static NSString * dequeCell = @"celled";
+    QueryWinningTableViewCell * cell = (QueryWinningTableViewCell*) [tableView dequeueReusableCellWithIdentifier:dequeCell];
+    if (cell == nil) {
+        cell =[[[QueryWinningTableViewCell alloc]initWithStyle:UITableViewCellStyleDefault reuseIdentifier:dequeCell]autorelease];
+        cell.selectionStyle = UITableViewCellSelectionStyleGray;
+  
+        }
+    cell.winModel =[self.queryWinDataArray objectAtIndex:indexPath.row];
+    cell.winState = @"2";
+    [cell queryWinContentViewCreate];
+
+    return cell;
+}
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    [self queryWinQueryDetailView:[self.queryWinDataArray objectAtIndex:indexPath.row]];
+}
+- (void)queryDetailCloseButton:(id)sender
+{
+    for (UIView *view in queryDetailView.subviews) {
+        [view removeFromSuperview];
+        view = nil;
+    }
+    [queryDetailView removeFromSuperview];
+}
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+@end

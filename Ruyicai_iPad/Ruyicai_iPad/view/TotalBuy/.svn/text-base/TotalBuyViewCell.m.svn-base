@@ -1,0 +1,124 @@
+//
+//  TotalBuyViewCell.m
+//  Ruyicai_iPad
+//
+//  Created by baozi on 13-7-18.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+#import "TotalBuyViewCell.h"
+
+@implementation TotalBuyViewCell
+@synthesize model;
+- (id)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier
+{
+    self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
+    if (self) {
+        // Initialization code
+        [self initContentView];
+    }
+    return self;
+}
+- (void)initContentView
+{
+    //进度显示图片
+  
+    
+//    KDGoalBar *  myGoalBar = [[KDGoalBar alloc] initWithFrame: CGRectMake(10, 5, 70, 70)];
+//	[myGoalBar setAllowDragging:YES];
+//    [myGoalBar setAllowSwitching:YES];
+//    [myGoalBar setPercent:50 animated:NO];
+//    [self.contentView addSubview:myGoalBar];
+    
+    progressImage = [[UIImageView alloc]initWithFrame:CGRectMake(10, 5, 70, 70)];
+    [self.contentView addSubview:progressImage];
+    
+    //进度百分比显示
+    numLabel =[[UILabel alloc]initWithFrame:CGRectMake(progressImage.frame.origin.x, progressImage.frame.origin.y+25, progressImage.frame.size.width, 20)];
+    numLabel.backgroundColor = [UIColor clearColor];
+    numLabel.textAlignment = UITextAlignmentCenter;
+    numLabel.textColor = [UIColor greenColor];
+    numLabel.font = [UIFont systemFontOfSize:25];
+    [self.contentView addSubview:numLabel];
+    
+    //彩种名称
+     kindLabel =[[UILabel alloc]initWithFrame:CGRectMake(10, 75, 80, 20)];
+    kindLabel.backgroundColor =[UIColor grayColor];
+    kindLabel.textAlignment = UITextAlignmentCenter;
+    [self.contentView addSubview:kindLabel];
+    //发起人
+    originatorLabel =[[UILabel alloc]initWithFrame:CGRectMake(100, 10, 200, 20)];
+    originatorLabel.backgroundColor =[UIColor clearColor];
+    originatorLabel.textColor =[UIColor grayColor];
+    [self.contentView addSubview:originatorLabel];
+    
+    allCostLabel =[[UILabel alloc]initWithFrame:CGRectMake(originatorLabel.frame.origin.x, originatorLabel.frame.origin.y + 25, 120, 40)];
+    allCostLabel.backgroundColor =[UIColor clearColor];
+    allCostLabel.font = [UIFont systemFontOfSize:23];
+    [self.contentView addSubview:allCostLabel];
+    
+    surpiusLabel =[[UILabel alloc]initWithFrame:CGRectMake(allCostLabel.frame.origin.x+allCostLabel.frame.size.width + 40, allCostLabel.frame.origin.y, allCostLabel.frame.size.width, allCostLabel.frame.size.height)];
+    surpiusLabel.backgroundColor =[UIColor clearColor];
+    surpiusLabel.font = allCostLabel.font;
+    [self.contentView addSubview:surpiusLabel];
+    
+    everyLabel =[[UILabel alloc]initWithFrame:CGRectMake(surpiusLabel.frame.origin.x + surpiusLabel.frame.size.width +20, surpiusLabel.frame.origin.y, 120, allCostLabel.frame.size.height)];
+    everyLabel.font = allCostLabel.font;
+    everyLabel.backgroundColor =[UIColor clearColor];
+    [self.contentView addSubview:everyLabel];
+    
+    perLabel = [[UILabel alloc]initWithFrame:CGRectMake(everyLabel.frame.origin.x+everyLabel.frame.size.width+35, everyLabel.frame.origin.y, 70, allCostLabel.frame.size.height)];
+    perLabel.backgroundColor =[UIColor clearColor];
+    perLabel.textColor =[UIColor redColor];
+    perLabel.font = allCostLabel.font;
+    [self.contentView addSubview:perLabel];
+    
+    UILabel * markLabel =[[UILabel alloc]initWithFrame:CGRectMake(allCostLabel.frame.origin.x, kindLabel.frame.origin.y, 500, 25)];
+    markLabel.backgroundColor =[UIColor clearColor];
+    markLabel.textColor =[UIColor grayColor];
+    markLabel.text = @"方案总额                   保底金额                认购金额                保底";
+    [self.contentView addSubview:markLabel];
+    [markLabel release];
+}
+#pragma mark ------------ methods
+- (void)dealloc
+{
+    [super dealloc];
+    [perLabel release];
+    [everyLabel release];
+    [surpiusLabel release];
+    [allCostLabel release];
+    [originatorLabel release];
+    [numLabel release];
+    [kindLabel release];
+    [progressImage release];
+
+}
+- (void)totalBuyCellRefresh
+{
+    int perpro = [model.progress intValue];
+    progressImage.image = [UIImage imageNamed:[NSString stringWithFormat:@"%d.png",(perpro/10)*10]];
+    numLabel.text = [NSString stringWithFormat:@"%d%%",perpro];
+
+    
+    kindLabel.text = model.lotName;
+
+    originatorLabel.text = [NSString stringWithFormat:@"发起人 : %@",model.starter];
+
+    allCostLabel.text =[NSString stringWithFormat:@"%0.2f元",[model.totalAmt intValue]/100.0];
+
+    surpiusLabel.text = [NSString stringWithFormat:@"%.2f元",[model.safeAmt intValue]/100.0];;
+
+    everyLabel.text =[NSString stringWithFormat:@"%0.2f元",[model.buyAmt intValue]/100.0];
+    perLabel.text = [NSString stringWithFormat:@"%@%%",model.safeRate];
+
+    
+}
+- (void)setSelected:(BOOL)selected animated:(BOOL)animated
+{
+    [super setSelected:selected animated:animated];
+
+    // Configure the view for the selected state
+}
+
+@end

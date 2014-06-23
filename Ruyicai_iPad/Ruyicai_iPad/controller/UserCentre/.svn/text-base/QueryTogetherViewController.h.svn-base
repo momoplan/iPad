@@ -1,0 +1,28 @@
+//
+//  QueryTogetherViewController.h
+//  Ruyicai_iPad
+//
+//  Created by baozi on 13-7-29.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+#import "RootViewController.h"
+#import "QueryTogetherTableViewCell.h"
+#import "QueryTogetherDetailView.h"
+@class QueryTogetherViewController;
+
+@protocol QueryTogetherViewControllerDelegate <NSObject>
+
+- (void)queryTogetherViewDisappear:(QueryTogetherViewController *)viewController;
+
+@end
+
+@interface QueryTogetherViewController : RootViewController
+<queryTogetherDetailViewDelegate>
+{
+    QueryTogetherDetailView *detailBgView;
+    UITableView * togethTabelView;// h合买信息 列表
+}
+@property (nonatomic,assign) id<QueryTogetherViewControllerDelegate>delegate;
+@property (nonatomic,retain) NSMutableArray * queryTogeArray; //列表数据数组
+@end

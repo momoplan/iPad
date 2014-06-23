@@ -1,0 +1,22 @@
+//
+//  QueryChaseTableViewCell.h
+//  Ruyicai_iPad
+//
+//  Created by baozi on 13-7-26.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+#import "QueryChaseCellModel.h"
+@interface QueryChaseTableViewCell : UITableViewCell
+{
+    UILabel *stateLabel;
+    UILabel *kindLabel;
+    UILabel *totelLabel;
+    UILabel * stageLabel;
+    UILabel * alStateLabel;
+}
+@property (nonatomic,retain) NSString * chaseState;
+@property (nonatomic,retain) QueryChaseCellModel * model;
+- (void)queryChaseTableCellRefresh;
+@end

@@ -1,0 +1,189 @@
+10
+
+dir
+0
+svn://lijinlin@192.168.0.32:8002/ruyicai_2/ryciPad/Ruyicai_iPad/Ruyicai_iPad/view/buyHall
+svn://lijinlin@192.168.0.32:8002/ruyicai_2
+add
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+176d66ff-5e82-0410-8940-9be4230128f8
+
+BuyLotteryTableCell.h
+file
+
+
+
+add
+
+PickNumBasketView.h
+file
+
+
+
+add
+
+SetChaseStageTableView.m
+file
+
+
+
+add
+
+SSCBigSmallSingleDoubleView.h
+file
+
+
+
+add
+
+MoreBetListTabelViewCell.h
+file
+
+
+
+add
+
+PickNumPlayKindSelectView.h
+file
+
+
+
+add
+
+BuyAdShowViewController.xib
+file
+
+
+
+add
+
+BuyLotteryTableCell.m
+file
+
+
+
+add
+
+SSCBigSmallSingleDoubleView.m
+file
+
+
+
+add
+
+PickNumSelectResultView.h
+file
+
+
+
+add
+
+PickNumBasketView.m
+file
+
+
+
+add
+
+PickNumberBasketTableCell.h
+file
+
+
+
+add
+
+MoreBetListTabelViewCell.m
+file
+
+
+
+add
+
+PickNumPlayKindSelectView.m
+file
+
+
+
+add
+
+BuyAdShowViewController.h
+file
+
+
+
+add
+
+PickNumSelectResultView.m
+file
+
+
+
+add
+
+PickNumberBasketTableCell.m
+file
+
+
+
+add
+
+RYC_SSQBallView.h
+file
+
+
+
+add
+
+BuyAdShowViewController.m
+file
+
+
+
+add
+
+PickBallView.h
+file
+
+
+
+add
+
+RYC_SSQBallView.m
+file
+
+
+
+add
+
+PickBallView.m
+file
+
+
+
+add
+
+SetChaseStageTableView.h
+file
+
+
+
+add
+

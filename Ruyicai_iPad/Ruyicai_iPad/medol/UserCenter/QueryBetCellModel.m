@@ -1,0 +1,58 @@
+//
+//  QueryBetCellModel.m
+//  Ruyicai_iPad
+//
+//  Created by baozi on 13-8-2.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+#import "QueryBetCellModel.h"
+
+@implementation QueryBetCellModel 
+@synthesize  lotNo;//彩种编号
+@synthesize  orderId;//订单编号
+@synthesize  lotName;//彩种名称
+@synthesize  lotMulti;//倍数
+@synthesize  betNum;//注数
+
+@synthesize  batchCode;//期号
+@synthesize  amount;//投注金额
+@synthesize  aneAmount;//单注金额
+@synthesize  play;//玩法
+@synthesize  betCode;//解析后的注码
+
+@synthesize  orderTime;//投注时间
+@synthesize  prizeAmt;//中奖金额
+//兑奖标识 0未开奖，3未中奖，4中大奖，5中小奖
+@synthesize  prizeState;
+@synthesize  winCode;//开奖号码
+@synthesize  stateMemo;//状态描述
+
+@synthesize  isRepeatBuy; //是否可再买一次
+
+//- (void)dealloc
+//{
+//    [lotNo release],lotNo = nil;
+//    [orderId release],orderId = nil;
+//    [lotName release],lotName = nil;
+//    [lotMulti release],lotMulti = nil;
+//    [betNum release],betNum = nil;
+//    
+//    [batchCode release],batchCode = nil;
+//    [amount release],amount = nil;
+//    [aneAmount release],aneAmount = nil;
+//    [play release],play = nil;
+//    [betCode release],betCode = nil;
+//    
+//    [orderTime release],orderTime = nil;
+//    [prizeAmt release],prizeAmt = nil;
+//    [prizeState release],prizeState = nil;
+//    [winCode release],winCode = nil;
+//    [stateMemo release],stateMemo = nil;
+//    
+//    [isRepeatBuy release],isRepeatBuy = nil;
+//    
+//    [super dealloc];
+//
+//}
+@end

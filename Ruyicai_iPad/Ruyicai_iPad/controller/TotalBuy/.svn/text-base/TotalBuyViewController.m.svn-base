@@ -1,0 +1,282 @@
+//
+//  TotalBuyViewController.m
+//  Ruyicai_iPad
+//
+//  Created by baozi on 13-6-27.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+#import "TotalBuyViewController.h"
+
+@interface TotalBuyViewController ()
+
+@end
+
+@implementation TotalBuyViewController
+@synthesize totalDataArray;
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+    }
+    return self;
+}
+- (void)dealloc{
+    [super dealloc];
+    [totalTableView release];
+    [totalDataArray release],totalDataArray = nil;
+
+}
+#pragma mark ------------ controller  methods
+- (void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(requestComplete:) name:KRequestCompNotName object:nil];
+}
+- (void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:KRequestCompNotName object:nil];
+    
+}
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+	// Do any additional setup after loading the view.
+    UILabel *titleLabel =[[UILabel alloc]initWithFrame:CGRectMake(400, 10, 150, 40)];
+    titleLabel.text = @"合买大厅";
+    titleLabel.backgroundColor =[UIColor clearColor];
+    titleLabel.textColor =[UIColor whiteColor];
+    titleLabel.font =[UIFont systemFontOfSize:25];
+    [self.view addSubview:titleLabel];
+    [titleLabel release];
+    /* 排序调整 */
+    [self arrangeAdjustView];
+    
+    totalTableView =[[UITableView alloc]initWithFrame:CGRectMake(0, 120, 600, self.view.frame.size.height-450)];
+    totalTableView.delegate = self;
+    totalTableView.dataSource = self;
+    [self.view addSubview:totalTableView];
+    
+    [self totalBuyViewDataRequesetOrderBy:@"progress" orderDir:@"DESC"];
+    
+    /* 方案筛选 */
+    [self projectScreenView];
+}
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+#pragma mark ---------------- viewCreate
+- (void)arrangeAdjustView
+{
+#define TAG_ARRANGE_BUTTON 100
+    UIButton * scheduleBtn =[UIButton buttonWithType:UIButtonTypeRoundedRect];
+    scheduleBtn.frame = CGRectMake(0, 70, 200, 50);
+    [scheduleBtn setTitle:@"参与进度" forState:UIControlStateNormal];
+    [scheduleBtn addTarget:self action:@selector(totalbuyArrageAdjustButton:) forControlEvents:UIControlEventTouchUpInside];
+    scheduleBtn.tag = TAG_ARRANGE_BUTTON + 1;
+    [self.view addSubview:scheduleBtn];
+    
+    UIButton * popularityBtn=[UIButton buttonWithType:UIButtonTypeRoundedRect];
+    popularityBtn.frame =CGRectMake(scheduleBtn.frame.size.width, scheduleBtn.frame.origin.y, scheduleBtn.frame.size.width, scheduleBtn.frame.size.height);
+    popularityBtn.tag = TAG_ARRANGE_BUTTON + 2;
+     [popularityBtn addTarget:self action:@selector(totalbuyArrageAdjustButton:) forControlEvents:UIControlEventTouchUpInside];
+    [popularityBtn setTitle:@"人气排序" forState:UIControlStateNormal];
+    [self.view addSubview:popularityBtn];
+    
+    UIButton * amountBtn =[UIButton buttonWithType:UIButtonTypeRoundedRect];
+    amountBtn.frame = CGRectMake(popularityBtn.frame.size.width+popularityBtn.frame.origin.x, scheduleBtn.frame.origin.y,scheduleBtn.frame.size.width, scheduleBtn.frame.size.height);
+    amountBtn.tag = TAG_ARRANGE_BUTTON + 3;
+    [amountBtn addTarget:self action:@selector(totalbuyArrageAdjustButton:) forControlEvents:UIControlEventTouchUpInside];
+    [amountBtn setTitle:@"方案总额" forState:UIControlStateNormal];
+    [self.view addSubview:amountBtn];
+    
+}
+- (void)projectScreenView
+{
+    UILabel *projectLabel =[[UILabel alloc]initWithFrame:CGRectMake(610, 70, 300, 50)];
+    projectLabel.text = @"方案筛选";
+    projectLabel.font =[UIFont systemFontOfSize:20];
+    [self.view addSubview:projectLabel];
+    [projectLabel release];
+    
+    UIButton *kindScreenBtn =[UIButton buttonWithType:UIButtonTypeRoundedRect];
+    kindScreenBtn.frame = CGRectMake(650, 120, 100, 40);
+    [kindScreenBtn setTitle:@"彩种筛选" forState:UIControlStateNormal];
+    [self.view addSubview:kindScreenBtn];
+    
+    UIButton * moneyScreenBtn =[UIButton buttonWithType:UIButtonTypeRoundedRect];
+    moneyScreenBtn.frame =CGRectMake(760, kindScreenBtn.frame.origin.y, kindScreenBtn.frame.size.width, kindScreenBtn.frame.size.height);
+    [moneyScreenBtn setTitle:@"方案金额" forState:UIControlStateNormal];
+    [self.view addSubview:moneyScreenBtn];
+    
+    UISearchBar *proSearchBar =[[UISearchBar alloc]initWithFrame:CGRectMake(600, 160, 300, 50)];
+    proSearchBar.placeholder = @"输入昵称、手机、ID 搜索";
+    [self.view addSubview:proSearchBar];
+    [proSearchBar release];
+    
+    UILabel *famlabel =[[UILabel alloc]initWithFrame:CGRectMake(600, 210, 300, 30)];
+    famlabel.backgroundColor =[UIColor clearColor];
+    famlabel.text = @"合买名人:";
+    [self.view addSubview:famlabel];
+    [famlabel release];
+    
+    UITextView * nameTextView =[[UITextView alloc]initWithFrame:CGRectMake(600, 240, projectLabel.frame.size.width, 150)];
+    nameTextView.userInteractionEnabled = NO;
+    nameTextView.backgroundColor =[UIColor clearColor];
+    nameTextView.textColor = [UIColor blueColor];
+    nameTextView.text = @"城市狼人 城市狼人 城市狼人 城市狼人 城市狼人 城市狼人 城市狼人 城市狼人 ";
+    nameTextView.font =[UIFont systemFontOfSize:17];
+    [self.view addSubview:nameTextView];
+    [nameTextView release];
+    
+}
+#pragma mark --------------- view methods
+- (void)totalbuyArrageAdjustButton:(id)sender
+{
+    /* 必填	totalAmt按总额排序，buyAmt按认购金额排序，
+     progress按进度排序，participantCount按参与人数排序*/
+    UIButton * btn = (UIButton *)sender;
+    NSString * order = nil;
+    switch (btn.tag - TAG_ARRANGE_BUTTON) {
+        case 1://参与进度
+        {
+            order = @"progress";
+        }
+            break;
+        case 2://人气排行
+        {
+            order = @"participantCount";
+        }
+            break;
+        case 3://方案总额
+        {
+            order = @"totalAmt";
+        }
+            break;
+        default:
+            break;
+    }
+    [self totalBuyViewDataRequesetOrderBy:order orderDir:@"DESC"];
+}
+#pragma mark -------------- request methods
+/*  合买大厅 返回数据 */
+- (void)requestComplete:(NSNotification*)notification
+{
+    NSDictionary* dataDic = (NSDictionary*)notification.userInfo;
+    DLog(@" 合买大厅 -------- %@",dataDic);
+    int reqType = [[dataDic objectForKey:KRequestTypeKey] integerValue];
+    switch (reqType) {
+        case ASINetworkRequestTypeQueryAllCaseLot:
+        {
+            [self totalBuyViewDataTidyDictionary:dataDic];
+        }
+            break;
+        default:
+            break;
+    }
+}
+/*  合买大厅 数据请求 */
+- (void)totalBuyViewDataRequesetOrderBy:(NSString *)orderBy orderDir:(NSString *)orderDir
+{
+    NSMutableDictionary * mDic =[[NSMutableDictionary alloc]init];
+    [mDic setObject:@"QueryLot" forKey:@"command"];
+    [mDic setObject:@"querycaselot" forKey:@"type"];
+    //totalAmt按总额排序，buyAmt按认购金额排序，progress按进度排序，participantCount按参与人数排序
+    [mDic setObject:orderBy forKey:@"orderBy"];
+    [mDic setObject:orderDir forKey:@"orderDir"];//DESC降序，ASC升序
+    [mDic setObject:@"10" forKey:@"maxresult"];
+    [mDic setObject:[NSString stringWithFormat:@"%d",0] forKey:@"pageindex"
+     ];
+    [[RYCNetworkManager sharedManager] netRequestStartWith:mDic withRequestType:ASINetworkRequestTypeQueryAllCaseLot showProgress:YES];
+}
+/* 合买大厅 数据 整理 */
+- (void)totalBuyViewDataTidyDictionary:(NSDictionary *)mDic
+{
+    NSMutableArray * muArray =[[NSMutableArray alloc]init];
+    NSArray * result = KISDictionaryHaveKey(mDic, @"result");
+    for (int i=0; i<result.count; i++) {
+        NSDictionary *dic =[result objectAtIndex:i];
+        TotalBuyViewCellModel *model =[[TotalBuyViewCellModel alloc]init];
+        model.caseLotId = KISDictionaryHaveKey(dic, @"caseLotId");
+        model.lotNo = KISDictionaryHaveKey(dic, @"lotNo");
+        model.lotName = KISDictionaryHaveKey(dic, @"lotName");
+        model.batchCode = KISDictionaryHaveKey(dic, @"batchCode");
+        model.starter = KISDictionaryHaveKey(dic, @"starter");
+        model.starterUserNo = KISDictionaryHaveKey(dic, @"starterUserNo");
+        model.totalAmt = KISDictionaryHaveKey(dic, @"totalAmt");
+        model.safeAmt = KISDictionaryHaveKey(dic, @"safeAmt");
+        model.buyAmt = KISDictionaryHaveKey(dic, @"buyAmt");
+        model.progress = KISDictionaryHaveKey(dic, @"progress");
+        model.safeRate = KISDictionaryHaveKey(dic, @"safeRate");
+        model.displayIcon = KISDictionaryHaveKey(dic, @"displayIcon");
+        model.isTop = KISDictionaryHaveKey(dic, @"isTop");
+        NSDictionary *palyIcon = KISDictionaryHaveKey(dic, @"displayIcon");
+        model.goldStar = KISDictionaryHaveKey(palyIcon, @"goldStar");
+        model.graygoldStar = KISDictionaryHaveKey(palyIcon, @"graygoldStar");
+        model.diamond = KISDictionaryHaveKey(palyIcon, @"diamond");
+        model.graydiamond = KISDictionaryHaveKey(palyIcon, @"graydiamond");
+        model.cup = KISDictionaryHaveKey(palyIcon, @"cup");
+        model.graycup = KISDictionaryHaveKey(palyIcon, @"graycup");
+        model.crown = KISDictionaryHaveKey(palyIcon, @"crown");
+        model.graycrown = KISDictionaryHaveKey(palyIcon, @"graycrown");
+        
+        [muArray addObject:model];
+        [model release];
+        
+    }
+    self.totalDataArray = [muArray retain];
+    [totalTableView reloadData];
+}
+#pragma mark ---------------- tableView delegate & dataSource
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    if (self.totalDataArray.count>0) {
+        return self.totalDataArray.count;
+    }
+    return 10;
+}
+- (CGFloat )tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    return 100;
+    
+}
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    static NSString * celled = @"celled";
+    TotalBuyViewCell  * cell = (TotalBuyViewCell *)[tableView dequeueReusableCellWithIdentifier:celled];
+    if(cell == nil){
+        cell =[[TotalBuyViewCell alloc]initWithStyle:UITableViewCellStyleDefault reuseIdentifier:celled];
+    }
+    cell.model =[self.totalDataArray objectAtIndex:indexPath.row];
+    [cell totalBuyCellRefresh];
+    return cell;
+}
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    DetailTotalBuyViewController *detailTotal =[[DetailTotalBuyViewController alloc]init];
+    detailTotal.delegate = self;
+    detailTotal.cellModel = [self.totalDataArray objectAtIndex:indexPath.row];
+    detailTotal.view.frame = CGRectMake(0, 0, 910, 730);
+    [self.view addSubview:detailTotal.view];
+    
+    CATransition *transition = [CATransition animation];
+    transition.duration = .5;
+    transition.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
+    transition.type = kCATransitionPush;//{ kCATransitionPush, kCATransitionMoveIn, kCATransitionReveal, kCATransitionFade }
+    transition.subtype = kCATransitionFromRight;//{ kCATransitionFromRight, kCATransitionFromLeft, kCATransitionFromTop, kCATransitionFromBottom }
+    [detailTotal.view.layer addAnimation:transition forKey:nil];
+
+}
+#pragma mark ----------- detailTotal
+- (void)detailTotalBuyViewDisappear:(DetailTotalBuyViewController *)viewController
+{
+    [viewController.view removeFromSuperview];
+    [viewController release];
+}
+@end

@@ -1,0 +1,76 @@
+//
+//  TicketKindViewController.h
+//  Ruyicai_iPad
+//
+//  Created by baozi on 13-6-28.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+#import "RootViewController.h"
+#import "RYNarBarView.h"
+#import "RYC_SSQBallView.h"
+
+#import "MoreBetListTabelViewCell.h"
+#import "BatchCodeCell.h"
+
+//
+#import "PickerViewController.h"
+#import "PlayIntroduceViewController.h"
+typedef enum  KindOfTicket{
+    //以下是枚举成员
+    TicketOfSSQ = 0,
+    TicketOfDLT,
+    TicketOfFC3D,
+    TicketOfSSC,
+    TicketOfGDHLSF
+}kind_ticket;
+@class TicketKindViewController;
+@protocol TicketKindDelegate <NSObject>
+
+@optional
+- (void)disMissTicketKindViewController:(TicketKindViewController*)controller;
+
+@end
+
+@interface TicketKindViewController : RootViewController
+<RYNarBarViewDelegate,UITableViewDataSource,UITableViewDelegate,SSQBallViewDelegate,
+RYCNetworkManagerDelegate,UITextFieldDelegate,UITextViewDelegate,PickerViewControllerDelegate,
+PlayIntroduceViewDelegate>
+{
+    UITableView *tableNumberGroup; //号码篮 列表
+    NSMutableArray * m_table_array; //投注号码 数组
+    
+    UILabel *numberLabel;//当前期号
+    UILabel * thisEndLabel;//截止时间
+    NSTimer * m_timer; //定时器
+    
+    UIScrollView *m_Ball_Direct; //直选
+    UIScrollView *m_Ball_Drag;//胆拖
+    /* 追号 */
+    int multipleNum;//倍数
+    int stageNum;//期数
+    NSMutableArray *stageTableArray;//期数设置 数组
+    UITableView *stageTableView;//期数设置 列表
+    BOOL isShowStageTable; //是否显示期数列表
+    UILabel *allCostLabel;//总金额 label
+    /* 合买 */
+    NSString * commisionRation;//提成比例
+    int buyAmt;//认购金额
+    int costAmount;//总金额
+    int minAmt;// 最低跟单
+    int safeAmt;//保底金额
+    NSMutableArray *openStateArray;//是否公开
+    NSString *cooDescription;
+    
+    /* 脱胆 */
+    RYC_SSQBallView * danmaBallView; //胆码
+    RYC_SSQBallView * tuomaBallView; //拖码区
+    RYC_SSQBallView * dargBlueBallView;// 篮球区
+    NSMutableArray * danmaArray;//胆码 球数
+    NSMutableArray * tuomaArray;//拖码 球数
+    
+    
+}
+@property (nonatomic,assign) id<TicketKindDelegate>delegate;
+@property (nonatomic,retain) NSString * batchEndTime;
+@end

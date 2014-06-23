@@ -1,0 +1,508 @@
+//
+//  DetailTotalBuyViewController.m
+//  Ruyicai_iPad
+//
+//  Created by baozi on 13-7-19.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+#import "DetailTotalBuyViewController.h"
+
+@interface DetailTotalBuyViewController ()
+
+@end
+
+@implementation DetailTotalBuyViewController
+@synthesize delegate;
+@synthesize togeModel;
+@synthesize cellModel;
+@synthesize detailPartDataArray;
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+    }
+    return self;
+}
+#pragma mark ------- controller
+- (void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(requestComplete:) name:KRequestCompNotName object:nil];
+}
+- (void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:KRequestCompNotName object:nil];
+    
+}
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+	// Do any additional setup after loading the view.
+    self.view.backgroundColor =[UIColor whiteColor];
+    
+    [self detailTitleView]; //标题view
+    [self totalBuyDetailDataRequest];//数据请求 
+
+}
+- (void)dealloc
+{
+    [super dealloc];
+    self.delegate = nil;
+    [togeModel release],togeModel = nil;
+    [cellModel release],cellModel = nil;
+    [partTableView release];
+    [detailPartDataArray release],detailPartDataArray = nil;
+    [subTextField release];
+    [subPerLabel release];
+    [miniTextField release];
+
+}
+#pragma mark -----------   view
+- (void)totalDetailViewCreate
+{
+    [self subscribeView];//认购
+    [self detailMinimunView];//保底
+    [self detailProjectContentView];//方案内容
+    [self detailParticipationView];//参与人员
+    [self detailimmediatelyView];//立即认购
+    [self detailProjectMessageView];//方案详情
+}
+/*  标题 */
+- (void)detailTitleView
+{
+    UIImageView *tabBarBgImageView = [[UIImageView alloc] initWithImage:RYCImageNamed(@"tabBar_bg.png")];
+    tabBarBgImageView.frame = CGRectMake(0, 0, 910, 64);
+    [self.view addSubview:tabBarBgImageView];
+    [tabBarBgImageView release];
+    
+    UILabel *titLabel =[[UILabel alloc]initWithFrame:CGRectMake(400, 10, 150, 40)];
+    titLabel.backgroundColor =[UIColor clearColor];
+    titLabel.text= @"方案详情";
+    titLabel.textColor = [UIColor whiteColor];
+    titLabel.font =[UIFont boldSystemFontOfSize:25];
+    [self.view addSubview:titLabel];
+    [titLabel release];
+    
+    UIButton *detBackBtn = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+    detBackBtn.frame =CGRectMake(0, 70, 70, 70);
+    [detBackBtn setImage:[UIImage imageNamed:@"viewback.png"] forState:UIControlStateNormal];
+    [detBackBtn addTarget:self action:@selector(detailBackButton:) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:detBackBtn];
+    
+    UIImageView * kindImg =[[UIImageView alloc]initWithFrame:CGRectMake(80, 80, 60, 60)];
+    kindImg.image =[UIImage imageNamed:@"ssq.png"];
+    [self.view addSubview:kindImg];
+    [kindImg release];
+    
+    UILabel *launchLabel =[[UILabel alloc]initWithFrame:CGRectMake(kindImg.frame.origin.x + kindImg.frame.size.width +10, kindImg.frame.origin.y, 200, 25)];
+    launchLabel.backgroundColor =[UIColor clearColor];
+    launchLabel.textColor =[UIColor grayColor];
+    launchLabel.text =[NSString stringWithFormat:@"合买发起人: %@",cellModel.starter];
+    [self.view addSubview:launchLabel];
+    [launchLabel release];
+    
+    UILabel  *gradeLabel =[[UILabel alloc]initWithFrame:CGRectMake(launchLabel.frame.origin.x, launchLabel.frame.origin.y+30, 120, 25)];
+    gradeLabel.backgroundColor =[UIColor clearColor];
+    gradeLabel.textColor = [UIColor grayColor];
+    gradeLabel.text = @"发起人等级";
+    [self.view addSubview:gradeLabel];
+    [gradeLabel release];
+    
+}
+/*  认购  */
+- (void)subscribeView
+{
+    UIView * subView =[[UIView alloc]initWithFrame:CGRectMake(0, 140, 600, 120)];
+    [self.view addSubview:subView];
+    [subView release];
+    UILabel *subLabel =[[UILabel alloc]initWithFrame:CGRectMake(10, 30, 100, 25)];
+    subLabel.text =@"我要认购:";
+    subLabel.backgroundColor =[UIColor clearColor];
+    [subView addSubview:subLabel];
+    [subLabel release];
+#define TAG_DETAIL_TEXTFIELD 100
+    subTextField =[[UITextField alloc]initWithFrame:CGRectMake(subLabel.frame.origin.x + subLabel.frame.size.width, subLabel.frame.origin.y, 150, 30)];
+    subTextField.text = @"0";
+    subTextField.delegate = self;
+    subTextField.tag = TAG_DETAIL_TEXTFIELD +1;
+    subTextField.borderStyle = UITextBorderStyleLine;
+    [subView addSubview:subTextField];
+#define TAG_DETAIL_LABEL 200
+    subPerLabel =[[UILabel alloc]initWithFrame:CGRectMake(subTextField.frame.origin.x +subTextField.frame.size.width+10, subTextField.frame.origin.y, 200, 30)];
+    subPerLabel.tag = TAG_DETAIL_LABEL;
+    subPerLabel.text =  [NSString stringWithFormat: @"元    占总额%0.2f%%",0.0];
+    subPerLabel.backgroundColor =[UIColor clearColor];
+    [subView addSubview:subPerLabel];
+    
+    UILabel *subDesLabel =[[UILabel alloc]initWithFrame:CGRectMake(subTextField.frame.origin.x, subTextField.frame.origin.y+50, 300, 30)];
+    subDesLabel.backgroundColor =[UIColor clearColor];
+    subDesLabel.text =  [NSString stringWithFormat:@"剩余%.2f元 可认购，至少认购2元",[togeModel.remainderAmt intValue]/100.0];
+    subDesLabel.textColor =[UIColor redColor];
+    [subView addSubview:subDesLabel];
+    [subDesLabel release];
+    
+}
+/*  保底 */
+- (void)detailMinimunView
+{
+    UIView *miniView =[[UIView alloc]initWithFrame:CGRectMake(0, 260, 600, 120)];
+    [self.view addSubview:miniView];
+    [miniView release];
+    
+    UILabel *miniLabel =[[UILabel alloc]initWithFrame:CGRectMake(10, 20, 100, 30)];
+    miniLabel.text = @"我要保底:";
+    miniLabel.backgroundColor =[UIColor clearColor];
+    [miniView addSubview:miniLabel];
+    [miniLabel release];
+    
+    miniTextField =[[UITextField alloc]initWithFrame:CGRectMake(miniLabel.frame.origin.x+miniLabel.frame.size.width, miniLabel.frame.origin.y, 150, 30)];
+    miniTextField.text = @"0";
+    miniTextField.delegate = self;
+    miniTextField.tag = TAG_DETAIL_TEXTFIELD +2;
+    miniTextField.borderStyle= UITextBorderStyleLine;
+    [miniView addSubview:miniTextField];
+    
+    UILabel *miniPerLabel =[[UILabel alloc]initWithFrame:CGRectMake(miniTextField.frame.origin.x+miniTextField.frame.size.width+10, miniLabel.frame.origin.y, 200, 30)];
+    miniPerLabel.backgroundColor =[UIColor clearColor];
+    miniPerLabel.text =[NSString stringWithFormat:@"元"];//    占总额%0.2f%%",0.0
+    [miniView addSubview:miniPerLabel];
+    [miniPerLabel release];
+    
+//    UILabel *miniDesLabel =[[UILabel alloc]initWithFrame:CGRectMake(miniTextField.frame.origin.x, miniTextField.frame.origin.y+50, 300, 30)];
+//    miniDesLabel.backgroundColor =[UIColor clearColor];
+//    miniDesLabel.text = [NSString stringWithFormat:@"剩余%d元可保底",209];
+//    miniDesLabel.textColor =[UIColor redColor];
+//    [miniView addSubview:miniDesLabel];
+//    [miniDesLabel release];
+    
+}
+/* 方案内容 */
+- (void)detailProjectContentView
+{
+    UIView *contentView =[[UIView alloc]initWithFrame:CGRectMake(0, 380, 600, 40)];
+    [self.view addSubview:contentView];
+    [contentView release];
+    
+    UILabel *contentLabel =[[UILabel alloc]initWithFrame:CGRectMake(20, 10, 100, 20)];
+    contentLabel.text = [NSString stringWithFormat:@"方案内容: %@",togeModel.betCodeHtml];
+    [contentView addSubview:contentLabel];
+    [contentLabel release];
+    
+}
+/* 参与人员 */
+- (void)detailParticipationView
+{
+    UIView *partView =[[UIView alloc]initWithFrame:CGRectMake(0, 420, 600, 250)];
+    [self.view addSubview:partView];
+    partView.backgroundColor =[UIColor grayColor];
+    [partView release];
+    
+    UILabel *parLabel =[[UILabel alloc]initWithFrame:CGRectMake(10, 5, 100, 20)];
+    parLabel.text = @"参与人员";
+    [partView addSubview:parLabel];
+    [parLabel release];
+    
+    partTableView =[[UITableView alloc]initWithFrame:CGRectMake(10, 30, 550, 200) style:UITableViewStylePlain];
+    partTableView.delegate = self;
+    partTableView.dataSource = self;
+    [partView addSubview:partTableView];
+    
+    NSMutableDictionary * mDic =[[[NSMutableDictionary alloc]init]autorelease];
+    [mDic setObject:@"QueryLot" forKey:@"command"];
+    [mDic setObject:@"caseLotBuys" forKey:@"type"];
+    [mDic setObject:togeModel.caseLotId forKey:@"caseid"];
+    [mDic setObject:[NSString stringWithFormat:@"%d",0] forKey:@"pageindex"];
+    [mDic setObject:@"10" forKey:@"maxresult"];
+    if ([UserLoginData sharedManager].hasLogin) {
+        [mDic setObject:[UserLoginData sharedManager].userNo forKey:@"userno"];
+    }
+    [[RYCNetworkManager sharedManager] netRequestStartWith:mDic withRequestType:ASINetworkReqestTypeGetLotDate showProgress:NO];
+}
+/* 立即认购 */
+- (void)detailimmediatelyView
+{
+    UIButton * immeButton = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+    immeButton.frame = CGRectMake(200, 680, 150, 50);
+    [immeButton setTitle:@"立即认购" forState:UIControlStateNormal];
+    [immeButton addTarget:self action:@selector(detailTOtalImmeButton:) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:immeButton]; 
+}
+/*  方案详情 */
+- (void)detailProjectMessageView
+{
+    UIView *messageView =[[UIView alloc]initWithFrame:CGRectMake(600, 140, 300, 550)];
+    [self.view addSubview:messageView];
+    messageView.backgroundColor =[UIColor grayColor];
+    [messageView release];
+    
+    UILabel *label =[[UILabel alloc]initWithFrame:CGRectMake(100, 10, 100, 30)];
+    label.text = @"方案详情";
+    label.backgroundColor =[UIColor clearColor];
+    [messageView addSubview:label];
+    [label release];
+    
+    NSArray * titArray =[[NSArray alloc]initWithObjects:@"彩种",@"截止时间",@"方案金额:",@"方案编号:",@"认购金额:",@"保底金额:",@"方案进度:",@"方案状态:",@"剩余金额:",@"参与人数:",@"发起人提成:",@"方案描述:", nil];
+    NSString * playState = nil;
+    //1:认购中;2:满员;3:成功;4:撤单;5:流单;6:已中奖
+    switch ([togeModel.displayState intValue]) {
+        case 1:
+            playState = @"认购中";
+            break;
+        case 2:
+            playState = @"满员";
+            break;
+        case 3:
+            playState = @"成功";
+            break;
+        case 4:
+            playState = @"撤单";
+            break;
+        case 5:
+            playState = @"流单";
+            break;
+        case 6:
+            playState = @"已中奖";
+            break;
+        default:
+            break;
+    }
+    NSArray * messArray = @[togeModel.lotName,togeModel.endTime,
+    [NSString stringWithFormat:@"%0.2f", [togeModel.totalAmt intValue]/100.0],
+    togeModel.caseLotId,
+    [NSString stringWithFormat:@"%.2f" ,[togeModel.hasBuyAmt intValue]/100.0],
+    [NSString stringWithFormat:@"%.2f",[togeModel.safeAmt intValue]/100.0],
+    [NSString stringWithFormat:@"%@%%",togeModel.buyProgress], playState,
+    [NSString stringWithFormat:@"%.2f",[togeModel.remainderAmt intValue]/100.0],
+    [NSString stringWithFormat:@"%@人", togeModel.participantCount],
+    [NSString stringWithFormat:@"%@%%",togeModel.commisionRatio],
+    togeModel.description,];
+//    NSArray * messArray = [[NSArray alloc]initWithObjects:@"1200.00元",@"第2013084期",@"C000000009791595",@"973.00元",@"18.00元", @"81%",@"认购中",@"227.00元",@"33人",@"10%",@"奖金2000到4000之间",nil];
+    for (int i=0; i<titArray.count; i++) {
+        /* 左边标题*/
+        UILabel *titLabel =[[UILabel alloc]initWithFrame:CGRectMake(0, 50+(40*i), 120, 25)];
+        titLabel.textAlignment = UITextAlignmentCenter;
+        titLabel.backgroundColor =[UIColor clearColor];
+        titLabel.textColor = [UIColor blueColor];
+        titLabel.text =[titArray objectAtIndex:i];
+        [messageView addSubview:titLabel];
+        [titLabel release];
+        /* 右边内容 */
+        UILabel *mesLabel =[[UILabel alloc]initWithFrame:CGRectMake(titLabel.frame.size.width, titLabel.frame.origin.y, 200, 25)];
+        mesLabel.backgroundColor =[UIColor clearColor];
+        mesLabel.text =[messArray objectAtIndex:i];
+        if (2==i ||4==i ||5==i ||8==i ||10==i) {
+            mesLabel.textColor =[UIColor redColor];
+        }
+        [messageView addSubview:mesLabel];
+        [mesLabel release];
+    }
+}
+#pragma mark -------------- requeset methods
+- (void)requestComplete:(NSNotification*)notification
+{
+    NSDictionary* dataDic = (NSDictionary*)notification.userInfo;
+    DLog(@" 合买详情 -------- %@",dataDic);
+    int reqType = [[dataDic objectForKey:KRequestTypeKey] integerValue];
+    switch (reqType) {
+        case ASINetworkRequestTypeQueryCaseLotDetail: //合买详情
+        {
+            [self totalDetailViewDataTidyDictionary:dataDic];
+        }
+            break;
+        case ASINetworkReqestTypeGetLotDate:// 参与人员
+        {
+            [self totalDetailParticipationDataDictionary:dataDic];
+        }
+            break;
+        case ASINetworkRequestTypeBetCaseLot://参与合买
+        {
+            [self totalDetailImmediatelyBuyDictionary:dataDic];
+        }
+            break;
+        default:
+            break;
+    }
+    
+}
+
+/* 合买详情 请求 */
+- (void)totalBuyDetailDataRequest
+{
+    NSMutableDictionary * mDic = [[[NSMutableDictionary alloc]init]autorelease];
+    [mDic setObject:@"select" forKey:@"command"];
+    [mDic setObject:@"caseLotDetail" forKey:@"requestType"];
+    [mDic setObject:cellModel.caseLotId forKey:@"id"];
+    if ([self isSuccessLogin]) {
+        [mDic setObject:[UserLoginData sharedManager].userNo forKey:@"userno"];
+    }
+    
+     [[RYCNetworkManager sharedManager] netRequestStartWith:mDic withRequestType:ASINetworkRequestTypeQueryCaseLotDetail showProgress:YES];
+}
+/* e\根据请求数据  布局视图 */
+- (void)totalDetailViewDataTidyDictionary:(NSDictionary *)tDic
+{
+    NSDictionary * dic = KISDictionaryHaveKey(tDic, @"result");
+    QueryTogetherDetailModel * model =[[QueryTogetherDetailModel alloc]init];
+    model.caseLotId = KISDictionaryHaveKey(dic, @"caseLotId");
+    model.starter = KISDictionaryHaveKey(dic, @"starter");
+    model.lotNo = KISDictionaryHaveKey(dic, @"lotNo");
+    model.lotName = KISDictionaryHaveKey(dic, @"lotName");
+    model.lotMulti = KISDictionaryHaveKey(dic, @"lotMulti");
+    model.batchCode = KISDictionaryHaveKey(dic, @"batchCode");
+    model.betCodeHtml = KISDictionaryHaveKey(dic, @"betCodeHtml");
+    model.betCodeJson = KISDictionaryHaveKey(dic, @"betCodeJson");
+    model.display = KISDictionaryHaveKey(dic, @"display");
+    model.visibility = KISDictionaryHaveKey(dic, @"visibility");
+    model.totalAmt = KISDictionaryHaveKey(dic, @"totalAmt");
+    model.safeAmt = KISDictionaryHaveKey(dic, @"safeAmt");
+    model.hasBuyAmt = KISDictionaryHaveKey(dic, @"hasBuyAmt");
+    model.remainderAmt = [dic objectForKey:@"remainderAmt"];// KISDictionaryHaveKey(dic, @"remainderAmt");
+    model.minAmt = KISDictionaryHaveKey(dic, @"minAmt");
+    model.buyAmtByStarter = KISDictionaryHaveKey(dic, @"buyAmtByStarter");
+    model.commisionRatio = KISDictionaryHaveKey(dic, @"commisionRatio");
+    model.participantCount = KISDictionaryHaveKey(dic, @"participantCount");
+    model.buyProgress = [dic objectForKey:@"buyProgress"];// KISDictionaryHaveKey(dic, @"buyProgress");
+    model.safeProgress = KISDictionaryHaveKey(dic, @"safeProgress");
+    model.description = KISDictionaryHaveKey(dic, @"description");
+    model.displayState = KISDictionaryHaveKey(dic, @"displayState");
+    model.winCode = KISDictionaryHaveKey(dic, @"winCode");
+    model.endTime = KISDictionaryHaveKey(dic, @"endTime");
+    model.cancelCaselot = KISDictionaryHaveKey(dic, @"cancelCaselot");
+    model.canAutoJoin = KISDictionaryHaveKey(dic, @"canAutoJoin");
+    self.togeModel = [model retain];
+    [model release];
+    [self totalDetailViewCreate];
+}
+/*  参与人员 数组 */
+- (void)totalDetailParticipationDataDictionary:(NSDictionary *)mDic
+{
+    NSMutableArray *muArray =[[NSMutableArray alloc]init];
+    NSArray *result = KISDictionaryHaveKey(mDic, @"result");
+    for (int i=0; i<result.count; i++) {
+        NSDictionary * dic =[result objectAtIndex:i];
+        TogetherParticipationModel *model = [[TogetherParticipationModel alloc]init];
+        model.nickName = KISDictionaryHaveKey(dic, @"nickName");
+        model.buyAmt = KISDictionaryHaveKey(dic, @"buyAmt");
+        model.buyTime = KISDictionaryHaveKey(dic, @"buyTime");
+        model.cancelCaselotbuy = KISDictionaryHaveKey(dic, @"cancelCaselotbuy");
+        model.state = KISDictionaryHaveKey(dic, @"state");
+        [muArray addObject:model];
+        [model release];
+    }
+    self.detailPartDataArray = [muArray retain];
+    [muArray release];
+    [partTableView reloadData];
+}
+/* 立即 认购 */
+- (void)totalDetailImmediatelyBuyDictionary:(NSDictionary *)mDic
+{
+    NSString * errCode = KISDictionaryHaveKey(mDic, @"error_code");
+    NSString * message = KISDictionaryHaveKey(mDic, @"message");
+    if ([errCode isEqualToString:@"0000"]) {
+        [self showAlertWithMessage:@"参与合买成功"];
+    }else
+    {
+        [self showAlertWithMessage:message];
+    }
+}
+#pragma mark ---------- textField delegate
+- (BOOL)textFieldShouldBeginEditing:(UITextField *)textField
+{
+    return YES;
+}
+- (BOOL)textFieldShouldEndEditing:(UITextField *)textField
+{
+    if (subTextField == textField) {
+        int textInt = [textField.text intValue];
+        int totalInt = [togeModel.totalAmt intValue];
+        subPerLabel.text =  [NSString stringWithFormat: @"元    占总额%0.2f%%",textInt/totalInt*1.0];
+ 
+    }
+    
+
+    return YES;
+}
+- (BOOL)textFieldShouldReturn:(UITextField *)textField
+{
+    [textField resignFirstResponder];
+    return YES;
+}
+#pragma mark ---------- detailView methods
+- (void)detailBackButton:(id)sender
+{
+    [self.delegate detailTotalBuyViewDisappear:self];
+}
+- (void)detailTOtalImmeButton:(id)sender
+{
+    if (0 == subTextField.text.length || 0 == miniTextField.text.length)
+    {
+        [self showAlertWithMessage:@"认购或保底金额不允许为空"];
+        return;
+    }
+    if (0 ==[subTextField.text intValue] && 0 ==[miniTextField.text intValue])
+    {
+        [self showAlertWithMessage: @"认购和保底金额不允许都为零"];
+        return;
+    }
+    if (![self HMCheckTextField:subTextField.text] || ![self HMCheckTextField:miniTextField.text]) {
+        return;
+    }
+    
+    if ([subTextField.text intValue]*100 >[togeModel.remainderAmt intValue]) {
+       [ self showAlertWithMessage:[NSString stringWithFormat:@"剩余可认购金额为 %@ 元",togeModel.remainderAmt]];
+    }
+
+    NSMutableDictionary * mDic = [[NSMutableDictionary alloc]init];
+    [mDic setObject:@"betLot" forKey:@"command"];
+    [mDic setObject:@"betcase" forKey:@"bettype"];
+    [mDic setObject:togeModel.caseLotId forKey:@"caseid"];
+    [mDic setObject:[UserLoginData sharedManager].userNo forKey:@"userno"];
+    [mDic setObject:[NSString stringWithFormat:@"%d", [subTextField.text intValue] * 100] forKey:@"amount"];
+	[mDic setObject:[NSString stringWithFormat:@"%d", [miniTextField.text intValue] * 100] forKey:@"safeAmt"];
+    [[RYCNetworkManager sharedManager] netRequestStartWith:mDic withRequestType:ASINetworkRequestTypeBetCaseLot showProgress:YES];
+}
+- (BOOL)HMCheckTextField:(NSString *)string
+{
+    for (int i = 0; i < string.length; i++)
+    {
+        UniChar chr = [string characterAtIndex:i];
+        if (chr < '0' || chr > '9')
+        {
+            [self showAlertWithMessage:@"金额须为整数" ];
+            return NO;
+        }
+    }
+    return YES;
+}
+#pragma mark ------------- partTableView delegate
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    
+    return self.detailPartDataArray.count;
+}
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    return 30;
+}
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    static NSString *celled = @"celled";
+    DetailTotalViewPartCell * cell =(DetailTotalViewPartCell *)[tableView dequeueReusableCellWithIdentifier:celled];
+    if (cell == nil) {
+        cell =[[DetailTotalViewPartCell alloc]initWithStyle:UITableViewCellStyleDefault reuseIdentifier:celled];
+    }
+    cell.model =[self.detailPartDataArray objectAtIndex:indexPath.row];
+    [cell detailTotalPartCellRefresh];
+    return cell;
+    
+}
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+@end

@@ -1,0 +1,28 @@
+//
+//  QueryChaseViewController.h
+//  Ruyicai_iPad
+//
+//  Created by baozi on 13-7-26.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+#import "RootViewController.h"
+#import "QueryChaseTableViewCell.h"
+#import "QueryChaseDetailView.h"
+@class QueryChaseViewController;
+@protocol QueryChaseViewControllerDelegate <NSObject>
+
+- (void)queryChaseViewDisappear:(QueryChaseViewController*)viewController;
+
+@end
+
+@interface QueryChaseViewController : RootViewController
+<UITableViewDataSource,UITableViewDelegate,QueryChaseDetailViewDelegate>
+{
+    QueryChaseDetailView *queryChaseView;
+    UITableView *chaseTableView;// 追号查询列表
+    
+}
+@property (nonatomic,retain)id<QueryChaseViewControllerDelegate>delegate;
+@property (nonatomic,retain) NSMutableArray * chaseStateArray;
+@end

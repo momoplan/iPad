@@ -1,0 +1,187 @@
+//
+//  QueryChaseViewController.m
+//  Ruyicai_iPad
+//
+//  Created by baozi on 13-7-26.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+#import "QueryChaseViewController.h"
+
+@interface QueryChaseViewController ()
+
+@end
+
+@implementation QueryChaseViewController
+@synthesize delegate;
+@synthesize chaseStateArray;
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+    }
+    return self;
+}
+- (void)dealloc
+{
+    [super dealloc];
+    self.delegate = nil;
+    [chaseStateArray release],chaseStateArray = nil;
+    [queryChaseView release];
+    [chaseTableView release];
+
+}
+- (void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(requestComplete:) name:KRequestCompNotName object:nil];
+}
+- (void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:KRequestCompNotName object:nil];
+    
+}
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    self.view.backgroundColor =[UIColor darkGrayColor];
+	// Do any additional setup after loading the view.
+    [self queryChaseTitleView];
+    [self queryChaseTableView];
+    
+    NSMutableDictionary * mDict =[[NSMutableDictionary alloc]init];
+    [mDict setObject:@"AllQuery" forKey:@"command"];
+    [mDict setObject:[UserLoginData sharedManager].userNo forKey:@"userno"];
+	[mDict setObject:@"10" forKey:@"maxresult"];
+	[mDict setObject:[NSString stringWithFormat:@"%d", 0] forKey:@"pageindex"];
+    [mDict setObject:@"track" forKey:@"type"];
+    [[RYCNetworkManager sharedManager] netRequestStartWith:mDict withRequestType:ASINetworkRequestTypeQueryTrack showProgress:YES];
+    
+    queryChaseView =[[QueryChaseDetailView alloc]initWithFrame:CGRectMake(550, 100, 360, 550)];
+    queryChaseView.delegate = self;
+    
+}
+#pragma mark ----------- chase view
+- (void)queryChaseTitleView
+{
+    UILabel *titleLabel =[[UILabel alloc]initWithFrame:CGRectMake(400, 10, 150, 40)];
+    titleLabel.text = @"追号查询";
+    titleLabel.backgroundColor =[UIColor clearColor];
+    titleLabel.textAlignment = UITextAlignmentCenter;
+    titleLabel.textColor =[UIColor whiteColor];
+    titleLabel.font =[UIFont systemFontOfSize:25];
+    [self.view addSubview:titleLabel];
+    [titleLabel release];
+    
+    UIButton *queryChaseBackBtn =[UIButton buttonWithType:UIButtonTypeCustom];
+    queryChaseBackBtn.frame = CGRectMake(0, 0, 76, 77);
+    [queryChaseBackBtn setImage:[UIImage imageNamed:@"narBack.png"] forState:UIControlStateNormal];
+    [queryChaseBackBtn addTarget:self action:@selector(queryChaseBackButtonClick:) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:queryChaseBackBtn];
+}
+/* 追号查询 列表 */
+- (void)queryChaseTableView
+{
+    chaseTableView =[[UITableView alloc]initWithFrame:CGRectMake(0, 80, 910, 650) style:UITableViewStylePlain];
+    chaseTableView.delegate = self;
+    chaseTableView.dataSource = self;
+    [self.view addSubview:chaseTableView];
+    
+}
+#pragma mark ---------- RYCNetManager delegate
+- (void)requestComplete:(NSNotification*)notification
+{
+    NSDictionary* dataDic = (NSDictionary*)notification.userInfo;
+    DLog(@"追号查询 -------- %@",dataDic);
+    int reqType = [[dataDic objectForKey:KRequestTypeKey] integerValue];
+    switch (reqType) {
+        case ASINetworkRequestTypeQueryTrack://
+        {
+            [self queryChaseDataSetDictionary:dataDic];
+        }
+            break;
+        default:
+            break;
+    }
+}
+/* 追号查询 数据整理 */
+- (void)queryChaseDataSetDictionary:(NSDictionary *)mDic
+{
+    [self.chaseStateArray removeAllObjects];
+    NSMutableArray * nuArray = [[NSMutableArray alloc]init];
+    NSArray * result = KISDictionaryHaveKey(mDic, @"result");
+    for (int i=0; i<result.count; i++) {
+        NSDictionary * dic =[result objectAtIndex:i];
+        QueryChaseCellModel * model =[[QueryChaseCellModel alloc]init];
+        model.tradeId = KISDictionaryHaveKey(dic, @"id");
+        model.lotNo = KISDictionaryHaveKey(dic, @"lotNo");
+        model.lotName = KISDictionaryHaveKey(dic, @"lotName");
+        model.lotMulti = KISDictionaryHaveKey(dic, @"lotMulti");
+        model.bet_code = KISDictionaryHaveKey(dic, @"bet_code");
+        model.betCode = KISDictionaryHaveKey(dic, @"betCode");
+        model.batchNum = KISDictionaryHaveKey(dic, @"batchNum");
+        model.lastNum = KISDictionaryHaveKey(dic, @"lastNum");
+        model.beginBatch = KISDictionaryHaveKey(dic, @"beginBatch");
+        model.lastBatch = KISDictionaryHaveKey(dic, @"lastBatch");
+        model.betNum = KISDictionaryHaveKey(dic, @"betNum");
+        model.amount = KISDictionaryHaveKey(dic, @"amount");
+        model.remainderAmount = KISDictionaryHaveKey(dic, @"remainderAmount");
+        model.oneAmount = KISDictionaryHaveKey(dic, @"oneAmount");
+        model.state = KISDictionaryHaveKey(dic, @"state");
+        model.orderTime = KISDictionaryHaveKey(dic, @"orderTime");
+        model.prizeEnd = KISDictionaryHaveKey(dic, @"prizeEnd");
+        model.isRepeatBuy = KISDictionaryHaveKey(dic, @"isRepeatBuy");
+        [nuArray addObject:model];
+        [model release];
+    }
+    self.chaseStateArray = [nuArray retain];
+    [nuArray release];
+    
+    [chaseTableView reloadData];
+}
+#pragma mark ---------- chase methods
+- (void)queryChaseBackButtonClick:(id)sender
+{
+    [self.delegate queryChaseViewDisappear:self];
+}
+
+#pragma mark ----------- chase tableview delegate
+-(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return self.chaseStateArray.count;
+}
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    return 90;
+}
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    static NSString * dequeCell = @"celled";
+    QueryChaseTableViewCell *cell =[tableView dequeueReusableCellWithIdentifier:dequeCell];
+    if (cell == nil) {
+        cell =[[[QueryChaseTableViewCell alloc]initWithStyle:UITableViewCellStyleDefault reuseIdentifier:dequeCell]autorelease];
+    }
+    cell.model =[chaseStateArray objectAtIndex:indexPath.row];
+    [cell queryChaseTableCellRefresh];
+    return cell;
+}
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    [queryChaseView chaseDetailDataChaseModel:[self.chaseStateArray objectAtIndex:indexPath.row]];
+    [self.view addSubview:queryChaseView];
+}
+#pragma mark --------- querychaseview delegate
+- (void)queryChaseDetailCloseButton:(UIView *)view
+{
+    [queryChaseView removeFromSuperview];
+}
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+@end

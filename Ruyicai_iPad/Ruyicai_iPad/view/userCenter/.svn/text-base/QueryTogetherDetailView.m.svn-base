@@ -1,0 +1,319 @@
+//
+//  QueryTogetherDetailView.m
+//  Ruyicai_iPad
+//
+//  Created by baozi on 13-7-30.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+#import "QueryTogetherDetailView.h"
+
+@implementation QueryTogetherDetailView
+@synthesize delegate;
+@synthesize detModel;
+@synthesize participationArray;
+- (id)initWithFrame:(CGRect)frame
+{
+    self = [super initWithFrame:frame];
+    if (self) {
+        // Initialization code
+        self.backgroundColor =[UIColor whiteColor];
+        
+        UIImageView *imgView =[[UIImageView alloc]initWithImage:[UIImage imageNamed:@"queryDetailBg.png"]];
+        imgView.frame = CGRectMake(0, 0, frame.size.width, frame.size.height);
+        [self addSubview:imgView];
+        [imgView release];
+        
+     
+        UILabel *titLabel =[[UILabel alloc]initWithFrame:CGRectMake(0, 10, frame.size.width, 30)];
+        titLabel.backgroundColor =[UIColor clearColor];
+        titLabel.text = @"合买详情";
+        titLabel.textAlignment = UITextAlignmentCenter;
+        [self addSubview:titLabel];
+        [titLabel release];
+        
+        togetherDetailView =[[UIScrollView alloc]initWithFrame:CGRectMake(5, 50, frame.size.width-10, 490)];
+        togetherDetailView.backgroundColor =[UIColor clearColor];
+        togetherDetailView.contentSize = CGSizeMake(frame.size.width-10, 850);
+        [self addSubview:togetherDetailView];
+        
+           
+        UIButton *closeBtn =[UIButton buttonWithType:UIButtonTypeCustom];
+        closeBtn.frame = CGRectMake(305, 0, 55, 55);
+        [closeBtn setImage:[UIImage imageNamed:@"queryclose.png"] forState:UIControlStateNormal];
+        [closeBtn addTarget:self action:@selector(queryTogetherDetailCloseButton:) forControlEvents:UIControlEventTouchUpInside];
+        [self addSubview:closeBtn];
+        
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(requestComplete:) name:KRequestCompNotName object:nil];
+
+    }
+    return self;
+}
+
+- (void)dealloc
+{
+    [super dealloc];
+    self.delegate = nil;
+    [detModel release],detModel = nil;
+    [personTableView release];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:KRequestCompNotName object:nil];
+    [participationArray release],participationArray = nil;
+}
+#pragma mark ---------- view
+/* 发起人 信息 */
+- (void)sponsorLabelMessage
+{
+    UILabel *titleLabel =[[UILabel alloc]initWithFrame:CGRectMake(10, 10, 150, 20)];
+    titleLabel.text = @"发起人信息";
+    titleLabel.backgroundColor = [UIColor clearColor];
+    [togetherDetailView addSubview:titleLabel];
+    [titleLabel release];
+    
+    UILabel * tetLabel = [[UILabel alloc]initWithFrame:CGRectMake(20, 40, 100, 20)];
+    tetLabel.text =@"发起人:";
+    tetLabel.textAlignment = UITextAlignmentCenter;
+    tetLabel.backgroundColor = titleLabel.backgroundColor;
+    tetLabel.textColor =[UIColor blueColor];
+    [togetherDetailView addSubview:tetLabel];
+    [tetLabel release];
+    
+    UILabel *recLabel =[[UILabel alloc]initWithFrame:CGRectMake(20, 70, 100, 20)];
+    recLabel.text = @"战 绩:";
+    recLabel.textAlignment = UITextAlignmentCenter;
+    recLabel.backgroundColor = titleLabel.backgroundColor;
+    recLabel.textColor = tetLabel.textColor;
+    [togetherDetailView addSubview:recLabel];
+    [recLabel release];
+    
+    UILabel * sponLabel =[[UILabel alloc]initWithFrame:CGRectMake(tetLabel.frame.origin.x + tetLabel.frame.size.width, tetLabel.frame.origin.y, 200, 20)];
+    sponLabel.textAlignment = UITextAlignmentCenter;
+    sponLabel.backgroundColor = titleLabel.backgroundColor;
+    sponLabel.text = detModel.starter;
+    [togetherDetailView addSubview:sponLabel];
+    [sponLabel release];
+    
+    UILabel *recordLabel =[[UILabel alloc]initWithFrame:CGRectMake(sponLabel.frame.origin.x, recLabel.frame.origin.y, 200, 20)];
+    recordLabel.text = @"笨蛋三级";
+    recordLabel.backgroundColor = titleLabel.backgroundColor;
+    recordLabel.textAlignment = UITextAlignmentCenter;
+    [togetherDetailView  addSubview:recordLabel];
+    [recordLabel release];
+    
+}
+/* 方案信息 */
+- (void)schemeInfomation
+{
+    UILabel * titLabel =[[UILabel alloc]initWithFrame:CGRectMake(10, 120, 150, 20)];
+    titLabel.text = @"方案信息";
+    titLabel.font =[UIFont boldSystemFontOfSize:16];
+    titLabel.backgroundColor = [UIColor clearColor];
+    [togetherDetailView addSubview:titLabel];
+    [titLabel release];
+    
+    NSArray *leArray =[[NSArray alloc]initWithObjects:@"彩种:",@"截止时间:",@"方案金额:",@"方案期号:",@"方案编号:",@"认购金额:",@"保底金额:",@"方案进度:",@"方案状态:",@"剩余金额:",@"参与人数:",@"发起人提成:",@"方案描述:", nil];
+    NSString * buyProgress = [NSString stringWithFormat:@"%.2f%%",[detModel.buyProgress floatValue]*1.0];
+    NSString * playState = nil; //1:认购中;2:满员;3:成功;4:撤单;5:流单;6:已中奖
+    switch ([detModel.displayState intValue]) {
+        case 1:
+            playState = @"认购中";
+            break;
+        case 2:
+            playState = @"满员";
+            break;
+        case 3:
+            playState = @"成功";
+            break;
+        case 4:
+            playState = @"撤单";
+            break;
+        case 5:
+            playState = @"流单";
+            break;
+        case 6:
+            playState = @"已中奖";
+            break;
+        default:
+            break;
+    }
+    NSArray *riArray = @[detModel.lotName,detModel.endTime,detModel.totalAmt,detModel.batchCode,detModel.caseLotId, [NSString stringWithFormat:@"%@",detModel.hasBuyAmt],detModel.safeAmt,buyProgress,playState,[NSString stringWithFormat:@"%@",detModel.remainderAmt],detModel.participantCount,detModel.commisionRatio,detModel.description];
+//    NSArray *riArray =[[NSArray alloc]initWithObjects:@"双色球",@"无",@"2.00元",@"第2012141期",@"C00000009960653",@"1.00元",@"0.00元",@"50%",@"流单",@"1.00元",@"1人",@"10%",@"无", nil];
+    for (int i=0; i<leArray.count; i++) {
+        UILabel *leftLabel =[[UILabel alloc]initWithFrame:CGRectMake(5, 150+(30*i), 150, 20)];
+        leftLabel.text = [NSString stringWithFormat:@"%@",[leArray objectAtIndex:i]];
+        leftLabel.textAlignment = UITextAlignmentCenter;
+        leftLabel.textColor =[UIColor blueColor];
+        leftLabel.backgroundColor = [UIColor clearColor];
+        [togetherDetailView addSubview:leftLabel];
+        [leftLabel release];
+        
+        UILabel *rightLabel =[[UILabel alloc]initWithFrame:CGRectMake(150, leftLabel.frame.origin.y, 200, 20)];
+        rightLabel.backgroundColor = [UIColor clearColor];
+        rightLabel.text =[NSString stringWithFormat:@"%@", [riArray objectAtIndex:i]];
+        [togetherDetailView addSubview:rightLabel];
+        [rightLabel release];
+    }
+    [leArray release];
+}
+/* 方案内容 */
+- (void)schemeContent
+{
+    UILabel *titLabel =[[UILabel alloc]initWithFrame:CGRectMake(10, 550, 150, 20)];
+    titLabel.font =[UIFont boldSystemFontOfSize:16];
+    titLabel.backgroundColor = [UIColor clearColor];
+
+    titLabel.text = @"方案内容";
+    [togetherDetailView addSubview:titLabel];
+    [titLabel release];
+    
+    UITextView * contentTextView =[[UITextView alloc]initWithFrame:CGRectMake(20, 570, 300, 100)];
+    contentTextView.text = detModel.betCodeHtml;
+    contentTextView.font = [UIFont systemFontOfSize:17];
+    [togetherDetailView addSubview:contentTextView];
+    [contentTextView release];
+    
+    UILabel *numTitLabel =[[UILabel alloc]initWithFrame:CGRectMake(20, contentTextView.frame.origin.y+contentTextView.frame.size.height, 120, 20)];
+    numTitLabel.text = @"开奖号码:";
+    numTitLabel.backgroundColor = titLabel.backgroundColor;
+
+    numTitLabel.textColor =[UIColor blueColor];
+    [togetherDetailView addSubview:numTitLabel];
+    [numTitLabel release];
+    
+    UILabel *numberLabel =[[UILabel alloc]initWithFrame:CGRectMake(numTitLabel.frame.origin.x + numTitLabel.frame.size.width, numTitLabel.frame.origin.y, 200, 20)];
+    numberLabel.text =detModel.winCode;
+    numberLabel.backgroundColor = titLabel.backgroundColor;
+
+    numberLabel.textColor = [UIColor redColor];
+    [togetherDetailView addSubview:numberLabel];
+    [numberLabel release];
+}
+/*  参与人员 */
+- (void)participationPersonnel
+{
+    UILabel *titLabel =[[UILabel alloc]initWithFrame:CGRectMake(10, 720, 150, 20)];
+    titLabel.text = @"参与人员";
+    titLabel.backgroundColor = [UIColor clearColor];
+    titLabel.font = [UIFont boldSystemFontOfSize:16];
+    [togetherDetailView addSubview:titLabel];
+    [titLabel release];
+
+    personTableView =[[UITableView alloc]initWithFrame:CGRectMake(20, titLabel.frame.origin.y+titLabel.frame.size.height, 300, 150) style:UITableViewStylePlain];
+    personTableView.delegate = self;
+    personTableView.dataSource = self;
+    [togetherDetailView addSubview:personTableView];
+    
+}
+/* 详情关闭 */
+- (void)queryTogetherDetailCloseButton:(id)sender
+{
+    [self.delegate queryTogetherDeTailDisappear:self];
+}
+#pragma mark ----------- model
+- (void)togetherDetailDataModel:(QueryTogetherDetailModel *)model
+{
+    self.detModel = [model retain];
+    for (UIView *view in togetherDetailView.subviews) {
+        [view removeFromSuperview];
+        view = nil;
+    }
+    [self sponsorLabelMessage];//发起人信息 
+    [self schemeInfomation];//方案信息
+    [self schemeContent];//方案内容
+    [self participationPersonnel];// 参与人员列表
+    [self togetherDetailParticipationRequest];//参与人员 请求
+    
+}
+/*  参与人员 数据请求 */
+- (void)togetherDetailParticipationRequest
+{
+    NSMutableDictionary * mDic =[[NSMutableDictionary alloc]init];
+    [mDic setObject:@"QueryLot" forKey:@"command"];
+    [mDic setObject:@"caseLotBuys" forKey:@"type"];
+    [mDic setObject:detModel.caseLotId forKey:@"caseid"];
+    [mDic setObject:[NSString stringWithFormat:@"%d",0] forKey:@"pageindex"];
+    [mDic setObject:@"10" forKey:@"maxresult"];
+    if ([UserLoginData sharedManager].hasLogin) {
+        [mDic setObject:[UserLoginData sharedManager].userNo forKey:@"userno"];
+    }
+    [[RYCNetworkManager sharedManager] netRequestStartWith:mDic withRequestType:ASINetworkReqestTypeGetLotDate showProgress:NO];
+}
+
+#pragma mark -------- notification methods
+/* 通知中心 回调函数 */
+- (void)requestComplete:(NSNotification*)notification
+{
+    NSDictionary* dataDic = (NSDictionary*)notification.userInfo;
+    DLog(@" 参与人员  -------- %@",dataDic);
+    int reqType = [[dataDic objectForKey:KRequestTypeKey] integerValue];
+    switch (reqType) {
+        case ASINetworkReqestTypeGetLotDate:
+        {
+            [self togetherParticipationDataDictionary:dataDic];
+        }
+            break;
+        default:
+            break;
+        
+    }
+}
+/*  参与人员 数组 */
+- (void)togetherParticipationDataDictionary:(NSDictionary *)mDic
+{
+    NSMutableArray *muArray =[[NSMutableArray alloc]init];
+    NSArray *result = KISDictionaryHaveKey(mDic, @"result");
+    for (int i=0; i<result.count; i++) {
+        NSDictionary * dic =[result objectAtIndex:i];
+        TogetherParticipationModel *model = [[TogetherParticipationModel alloc]init];
+        model.nickName = KISDictionaryHaveKey(dic, @"nickName");
+        model.buyAmt = KISDictionaryHaveKey(dic, @"buyAmt");
+        model.buyTime = KISDictionaryHaveKey(dic, @"buyTime");
+        model.cancelCaselotbuy = KISDictionaryHaveKey(dic, @"cancelCaselotbuy");
+        model.state = KISDictionaryHaveKey(dic, @"state");
+        [muArray addObject:model];
+        [model release];
+    }
+    self.participationArray = [muArray retain];
+    [muArray release];
+    [personTableView reloadData];
+}
+#pragma mark -------------- tableview delegate
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return self.participationArray.count;
+}
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    static NSString *dequeCell =@"celled";
+    UITableViewCell * cell =[tableView dequeueReusableCellWithIdentifier:dequeCell];
+    if (cell == nil) {
+        cell =[[[UITableViewCell alloc]initWithStyle:UITableViewCellStyleDefault reuseIdentifier:dequeCell]autorelease];
+    }
+    TogetherParticipationModel * model =[[TogetherParticipationModel alloc]init];
+    model = [self.participationArray objectAtIndex:indexPath.row];
+    UILabel * namLabel =[[UILabel alloc]initWithFrame:CGRectMake(10, 0, 150, 20)];
+    namLabel.text =model.nickName;
+    [cell.contentView addSubview:namLabel];
+    [namLabel release];
+    
+    UILabel *costLabel =[[UILabel alloc]initWithFrame:CGRectMake(170, 0, 150, 20)];
+    costLabel.text = [NSString stringWithFormat: @"%.2f元",[model.buyAmt intValue]/100.0];
+    costLabel.textColor =[UIColor redColor];
+    [cell.contentView addSubview:costLabel];
+    [costLabel release];
+    
+    UILabel *timLabel =[[UILabel alloc]initWithFrame:CGRectMake(10, 20, 200, 20)];
+    timLabel.text = model.buyTime;
+    [cell.contentView addSubview:timLabel];
+    [timLabel release];
+    return cell;
+}
+/*
+// Only override drawRect: if you perform custom drawing.
+// An empty implementation adversely affects performance during animation.
+- (void)drawRect:(CGRect)rect
+{
+    // Drawing code
+}
+*/
+
+@end

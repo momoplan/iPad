@@ -1,0 +1,47 @@
+//
+//  RYCCommon.h
+//  Ruyicai_iPad
+//
+//  Created by baozi on 13-7-4.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+#import "RYCNetworkManager.h"
+#import "UserLoginData.h"
+
+//测试 接口
+#define kRuYiCaiServer   @"http://192.168.0.42:80/lotserver/RuyicaiServlet"
+
+//版本标示 
+#define kRuYiCaiPlatform @"iPad"
+#define kRuYiCaiVersion  @"1.0"
+#define kRuYiCaiCoopid   @"887"
+
+//加密 字符串
+#define kRuYiCaiAesKey   @"<>hj12@#$$%^~~ff"
+//alertTag
+
+#define KISEmptyOrEnter(text) ([text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]].length == 0)//判断输入框是否有数据（除去空格和换行）
+#define KISDictionaryHaveKey(dict,key) [[dict allKeys] containsObject:key] && ([dict objectForKey:key] != (NSString*)[NSNull null]) ? [dict objectForKey:key] : @""//取字典数据 防止崩溃
+
+#define NUMBERS @"0123456789\n"//只允许输入数字
+#define kColorWithRGB(r, g, b, a) \
+[UIColor colorWithRed:r/255.f green:g/255.f blue:b/255.f alpha:a]//色值
+
+//彩种编号
+#define kLotNoSSQ        @"F47104"  //双色球
+#define kLotNoQLC        @"F47102"  //七乐彩
+#define kLotNoFC3D       @"F47103"  //福彩3D
+#define kLotNo115        @"T01010"  //11选5
+#define kLotNoSSC        @"T01007"  //时时彩
+#define kLotNoDLT        @"T01001"  //大乐透
+#define kLotNoPLS        @"T01002"  //排列三
+#define kLotNoQXC        @"T01009"  //七星彩
+
+//彩种名称
+#define kLotTitleSSQ     @"ssq"  //双色球
+#define kLotTitleQLC     @"qlc"  //七乐彩
+#define kLotTitleFC3D    @"ddd"  //福彩3D
+#define kLotTitleDLT     @"dlt"  //大乐透
+#define kLotTitle11X5    @"11-5" //11选5
+#define kLotTitleSSC     @"ssc"  //时时彩

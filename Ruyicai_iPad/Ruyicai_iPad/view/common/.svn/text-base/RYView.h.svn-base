@@ -1,0 +1,19 @@
+//
+//  RYView.h
+//  Ruyicai_iPad
+//
+//  Created by baozi on 13-6-27.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+
+@interface RYView : UIView
+
+- (void)initView;
+- (NSMutableArray*)randomBallWithMax:(int)maxNum selectNum:(int)select_ran;
+
+/* 彩球状态数组 转化 数字形式 */
+- (NSArray *)convertArrayWithStateArray:(NSArray *)stateArray;
+
+@end

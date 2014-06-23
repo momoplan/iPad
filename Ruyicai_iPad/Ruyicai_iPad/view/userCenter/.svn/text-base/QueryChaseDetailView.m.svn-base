@@ -1,0 +1,192 @@
+//
+//  QueryChaseDetailView.m
+//  Ruyicai_iPad
+//
+//  Created by baozi on 13-7-26.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+#import "QueryChaseDetailView.h"
+
+@implementation QueryChaseDetailView
+@synthesize delegate;
+@synthesize chaseModel;
+- (id)initWithFrame:(CGRect)frame
+{
+    self = [super initWithFrame:frame];
+    if (self) {
+        // Initialization code
+        chaseScroll =[[UIScrollView alloc]initWithFrame:CGRectMake(0, 50, frame.size.width, frame.size.height-10)];
+        chaseScroll.contentSize = CGSizeMake(frame.size.width, 700);
+        [self queryChaseTitleView];
+//        [self queryChaseSchemeDetail];
+//        [self addSubview:chaseScroll];
+//        [self queryChaseSchemeContent];//方案内容
+//        [self queryChaseDetaiel];//追号详情
+
+    }
+    return self;
+}
+- (id)initWithFrame:(CGRect)frame chaseModel:(QueryChaseCellModel *)model
+{
+    self = [super initWithFrame:frame];
+    if (self) {
+        // Initialization code
+        chaseScroll =[[UIScrollView alloc]initWithFrame:CGRectMake(0, 50, frame.size.width, frame.size.height-10)];
+        chaseScroll.contentSize = CGSizeMake(frame.size.width, 700);
+        [self queryChaseTitleView];
+        [self queryChaseSchemeDetail];
+        [self addSubview:chaseScroll];
+        [self queryChaseSchemeContent];//方案内容
+        [self queryChaseDetaiel];//追号详情
+        
+    }
+    return self;
+    
+}
+- (void)chaseDetailDataChaseModel:(QueryChaseCellModel *)model
+{
+    for (UIView * view in chaseScroll.subviews) {
+        [view removeFromSuperview];
+        view = nil;
+    }
+    chaseModel = [model retain];
+    [self addSubview:chaseScroll];
+    [self queryChaseSchemeDetail];
+    [self queryChaseSchemeContent];//方案内容
+    [self queryChaseDetaiel];//追号详情
+}
+- (void)dealloc
+{
+    [super dealloc];
+    [chaseScroll release];
+    [chaseModel release],chaseModel = nil;
+}
+- (void)queryChaseTitleView
+{
+    UIImageView *imgView =[[UIImageView alloc]initWithImage:[UIImage imageNamed:@"queryDetailBg.png"]];
+    imgView.frame = CGRectMake(0, 0, self.frame.size.width, 600);
+    [self addSubview:imgView];
+    [imgView release];
+    
+    UIButton *closeBtn =[UIButton buttonWithType:UIButtonTypeCustom];
+    closeBtn.frame = CGRectMake(305, 0, 55, 55);
+    [closeBtn setImage:[UIImage imageNamed:@"queryclose.png"] forState:UIControlStateNormal];
+    [closeBtn addTarget:self action:@selector(queryDetailCloseButton:) forControlEvents:UIControlEventTouchUpInside];
+    [self addSubview:closeBtn]; //125162466
+    
+    UILabel *label =[[UILabel alloc]initWithFrame:CGRectMake(0, 10, 300, 30)];
+    label.backgroundColor =[UIColor clearColor];
+    label.textAlignment = UITextAlignmentCenter;
+    label.text = @"追号详情";
+    [self addSubview:label];
+    [label release];
+}
+/*  方案详情 */
+- (void)queryChaseSchemeDetail
+{
+    UILabel * label =[[UILabel alloc]initWithFrame:CGRectMake(10, 0, 100, 20)];
+    label.backgroundColor =[UIColor clearColor];
+    label.text =@"方案详情";
+    [chaseScroll addSubview:label];
+    [label release];
+    
+    NSArray * array =[[NSArray alloc]initWithObjects:@"彩种:",@"编号:",@"追号期数:",@"已追期数:",@"已撤销期数",@"追号总额",@"投注时间:",@"中奖停止追号",@"当前状态", nil];
+    NSString *state = nil;
+    switch ([chaseModel.state intValue]) {
+        case 0:
+            state =@"进行中";
+            break;
+        case 2:
+            state = @"已取消";
+            break;
+        case 3:
+            state = @"已完成";
+            break;
+            
+        default:
+            break;
+    }
+    NSArray *conArray = [[NSArray alloc]initWithObjects:chaseModel.lotName,chaseModel.tradeId,[NSString stringWithFormat:@"%@", chaseModel.batchNum],[NSString stringWithFormat:@"%@", chaseModel.lastNum],@"",[NSString stringWithFormat:@"%.2f", [chaseModel.amount intValue]/100.0],chaseModel.orderTime,chaseModel.prizeEnd,state,nil];
+    DLog(@"conArray %@",conArray);
+//    NSArray * conArray =[[NSArray alloc]initWithObjects:@"双色球",@"0000000008443962",@"2期",@"2期",@"0期",@"第2012128期",@"4元",@"2012-10-30 10:52:48",@"是",@"已完成", nil];
+    for (int i=0; i<array.count; i++) {
+        UILabel * lefeLabel =[[UILabel alloc]initWithFrame:CGRectMake(0, 30+(30*i), 130, 20)];
+        lefeLabel.text =[array objectAtIndex:i];
+        lefeLabel.textColor =  RGBCOLOR(107, 140, 175);
+        lefeLabel.textAlignment = UITextAlignmentCenter;
+        lefeLabel.backgroundColor =[UIColor clearColor];
+        [chaseScroll addSubview:lefeLabel];
+        [lefeLabel release];
+        
+        UILabel *rightLabel =[[UILabel alloc]initWithFrame:CGRectMake(140, lefeLabel.frame.origin.y, 200, 20)];
+        rightLabel.backgroundColor =[UIColor clearColor];
+        rightLabel.text = [conArray objectAtIndex:i];
+        DLog(@"%@rightLabel.text",rightLabel.text);
+        [chaseScroll addSubview:rightLabel];
+        [rightLabel release];
+    }
+}
+/* 方案内容*/
+- (void)queryChaseSchemeContent
+{
+    UILabel * conLabel =[[UILabel alloc]initWithFrame:CGRectMake(10, 300, 150, 20)];
+    conLabel.backgroundColor =[UIColor clearColor];
+    conLabel.text = @"方案内容";
+    [chaseScroll addSubview:conLabel];
+    [conLabel release];
+    
+    UITextView * conTextView =[[UITextView alloc]initWithFrame:CGRectMake(20, 330, 300, 100)];
+    conTextView.text = chaseModel.betCode;
+    conTextView.font =[UIFont systemFontOfSize:17];
+    [chaseScroll addSubview:conTextView];
+    [conTextView release];
+}
+/* 追号详情 */
+- (void)queryChaseDetaiel
+{
+    UILabel *detLabel =[[UILabel alloc]initWithFrame:CGRectMake(10, 440, 200, 20)];
+    detLabel.text = @"追号详情";
+    detLabel.backgroundColor =[UIColor clearColor];
+    [chaseScroll addSubview:detLabel];
+    [detLabel release];
+    
+    UITableView *detTableView =[[UITableView alloc]initWithFrame:CGRectMake(20, 470, 320, 190) style:UITableViewStylePlain];
+    detTableView.delegate= self;
+    detTableView.dataSource = self;
+    [chaseScroll addSubview:detTableView];
+    [detTableView release];
+}
+/* 关闭view */
+- (void)queryDetailCloseButton:(id)sender
+{
+    [self.delegate queryChaseDetailCloseButton:self];
+}
+#pragma mark ------- tableView delegate
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return 4;
+}
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    return 80;
+}
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    static NSString * dequeCell =@"celled";
+    QueryChaseDetailTableCell * cell =[tableView dequeueReusableCellWithIdentifier:dequeCell];
+    if (cell == nil) {
+        cell =[[QueryChaseDetailTableCell alloc]initWithStyle:UITableViewCellStyleDefault reuseIdentifier:dequeCell];
+    }
+    return cell;
+}
+/*
+// Only override drawRect: if you perform custom drawing.
+// An empty implementation adversely affects performance during animation.
+- (void)drawRect:(CGRect)rect
+{
+    // Drawing code
+}
+*/
+
+@end

@@ -1,0 +1,27 @@
+//
+//  DrawMoneyViewController.h
+//  Ruyicai_iPad
+//
+//  Created by baozi on 13-7-22.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+#import "RootViewController.h"
+#import "DrawMoneyRecordViewCell.h"
+@class DrawMoneyViewController;
+@protocol DrawMoneyViewControllerDelegate <NSObject>
+
+- (void)drawMoneyViewDisappear:(DrawMoneyViewController *)viewController;
+
+@end
+
+@interface DrawMoneyViewController : RootViewController
+<UITextFieldDelegate,UITableViewDataSource,UITableViewDelegate>
+{
+    UIView *bankView;//银行卡
+    UIView *recordView;//记录
+    UIView *aliPayView;//提现 支付宝
+    
+}
+@property (nonatomic,assign)id<DrawMoneyViewControllerDelegate>delegate;
+@end

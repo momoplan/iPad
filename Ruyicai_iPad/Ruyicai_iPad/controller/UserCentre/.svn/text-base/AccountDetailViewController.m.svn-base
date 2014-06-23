@@ -1,0 +1,208 @@
+//
+//  AccountDetailViewController.m
+//  Ruyicai_iPad
+//
+//  Created by baozi on 13-7-23.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+#import "AccountDetailViewController.h"
+
+@interface AccountDetailViewController ()
+
+@end
+
+@implementation AccountDetailViewController
+@synthesize delegate;
+@synthesize accountDataArray;
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+    }
+    return self;
+}
+- (void)dealloc
+{
+    [super dealloc];
+    self.delegate  = nil;
+    [accountDataArray release],accountDataArray =nil;
+    [accTableView release];
+
+}
+- (void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(requestComplete:) name:KRequestCompNotName object:nil];
+}
+- (void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:KRequestCompNotName object:nil];
+    
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+	// Do any additional setup after loading the view.
+    self.view.backgroundColor =[UIColor darkGrayColor];
+    [self accountTitleView]; //页面 标题等
+    [self accountTableView];// 列表布局u
+    [self accountInitTableViewDataPage:0 TransactionType:0];
+    
+  
+}
+#pragma mark -------- view create
+- (void)accountTitleView
+{
+    UILabel *titleLabel =[[UILabel alloc]initWithFrame:CGRectMake(400, 10, 150, 40)];
+    titleLabel.text = @"账户明细";
+    titleLabel.backgroundColor =[UIColor clearColor];
+    titleLabel.textAlignment = UITextAlignmentCenter;
+    titleLabel.textColor =[UIColor whiteColor];
+    titleLabel.font =[UIFont systemFontOfSize:25];
+    [self.view addSubview:titleLabel];
+    [titleLabel release];
+    
+    UIButton *accountBackBtn =[UIButton buttonWithType:UIButtonTypeRoundedRect];
+    accountBackBtn.frame = CGRectMake(0, 70, 76, 77);
+    [accountBackBtn setImage:[UIImage imageNamed:@"viewback.png"] forState:UIControlStateNormal];
+    [accountBackBtn  setImage:[UIImage imageNamed:@"viewback-click.png"] forState:UIControlStateSelected];
+    [accountBackBtn addTarget:self action:@selector(accountBackButtonClick:) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:accountBackBtn];
+#define TAG_ACCOUNT_BUTTON 100
+    NSArray *array =[[NSArray alloc]initWithObjects:@"全部",@"充值",@"支付",@"派奖",@"提现", nil];
+    for (int i=0; i<array.count; i++) {
+        UIButton *button =[UIButton buttonWithType:UIButtonTypeRoundedRect];
+        button.frame = CGRectMake(80+(80*i), 80, 80, 40);
+        button.tag = TAG_ACCOUNT_BUTTON  +i;
+        [button setTitle:[array objectAtIndex:i] forState:UIControlStateNormal];
+        [button addTarget:self action:@selector(accountDetailKindButton:) forControlEvents:UIControlEventTouchUpInside];
+        [self.view addSubview:button];
+        
+    }
+}
+/* 明细列表 */
+- (void)accountTableView{
+    accTableView =[[UITableView alloc]initWithFrame:CGRectMake(0, 150, 900, 600) style:UITableViewStylePlain];
+    accTableView.delegate = self;
+    accTableView.dataSource = self;
+    [self.view addSubview:accTableView];
+}
+- (void)accountInitTableViewDataPage:(NSUInteger)pageIndex TransactionType:(NSUInteger)type
+{
+    NSMutableDictionary * mDic =[[[NSMutableDictionary alloc]init]autorelease];
+    [mDic setObject:@"accountdetail" forKey:@"command"];
+    [mDic setObject:@"new" forKey:@"type"];
+    [mDic setObject:[UserLoginData sharedManager].userNo forKey:@"userno"];
+    [mDic setObject:@"12" forKey:@"maxresult"];
+    [mDic setObject:[NSString stringWithFormat:@"%d", pageIndex] forKey:@"pageindex"];
+    [mDic setObject:[NSString stringWithFormat:@"%d",type] forKey:@"transactiontype"];
+    [[RYCNetworkManager sharedManager] netRequestStartWith:mDic withRequestType:ASINetworkRequestTypeAccountDetail showProgress:YES];
+
+}
+#pragma mark ---------- RYCNetManager delegate
+- (void)requestComplete:(NSNotification*)notification
+{
+    NSDictionary* dataDic = (NSDictionary*)notification.userInfo;
+    DLog(@"账号 明细-------- %@",dataDic);
+    int reqType = [[dataDic objectForKey:KRequestTypeKey] integerValue];
+    switch (reqType) {
+        case ASINetworkRequestTypeAccountDetail://账户明细
+        {
+            [self accountDetailTableDataReload:dataDic];
+        }
+            break;
+        default:
+            break;
+    }
+}
+#pragma mark --------- account methods
+/*  请求数据格式化 */
+- (void)accountDetailTableDataReload:(NSDictionary *)dataDic
+{
+    [self.accountDataArray removeAllObjects];
+    NSMutableArray * nuArray =[[NSMutableArray alloc]init];
+    NSArray * array =[dataDic objectForKey:@"result"];
+    for (int i=0; i<array.count; i++) {
+        NSDictionary *dic =[array objectAtIndex:i];
+        AccountDetailCellModel *model =[[AccountDetailCellModel alloc]init];
+        model.amt = [dic objectForKey:@"amt"];
+        model.blsign = [dic objectForKey:@"blsign"];
+        model.platTime = [dic objectForKey:@"platTime"];
+        model.memo =[dic objectForKey:@"memo"];
+        model.transactionType = [dic objectForKey:@"ttransactionType"];
+        [nuArray addObject:model];
+        [model release];
+    }
+    self.accountDataArray = [nuArray retain];
+    [nuArray release];
+
+    [accTableView reloadData];
+}
+- (void)accountBackButtonClick:(id)sender
+{
+    [self.delegate accountDetailViewDisappear:self];
+}
+- (void)accountDetailKindButton:(id)sender
+{
+    UIButton *btn = (UIButton *)sender;
+    switch (btn.tag - TAG_ACCOUNT_BUTTON) {
+        case 0://全部
+        {
+             [self accountInitTableViewDataPage:0 TransactionType:0];
+
+        }
+            break;
+        case 1://充值
+        {
+            [self accountInitTableViewDataPage:0 TransactionType:1];
+
+        }
+            break;
+        case 2://支付
+        {
+            [self accountInitTableViewDataPage:0 TransactionType:2];
+        }
+            break;
+        case 3://派奖
+        {
+            [self accountInitTableViewDataPage:0 TransactionType:3];
+        }
+            break;
+        case 4://提现
+        {
+            [self accountInitTableViewDataPage:0 TransactionType:4];
+        }
+            break;
+        default:
+            
+            break;
+    }
+}
+#pragma mark ----------- account tableView 
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return [self.accountDataArray count];
+}
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    static NSString *dequeCell = @"celled";
+    AccountDetailTabelViewCell *cell =[(AccountDetailTabelViewCell*) [tableView dequeueReusableCellWithIdentifier:dequeCell] autorelease];
+    if (cell == nil) {
+        cell =[[AccountDetailTabelViewCell alloc]initWithStyle:UITableViewCellStyleDefault reuseIdentifier:dequeCell];
+        
+    }
+    cell.model =[self.accountDataArray objectAtIndex:indexPath.row];
+    [cell accountCellContentView];
+    return cell;
+}
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+@end

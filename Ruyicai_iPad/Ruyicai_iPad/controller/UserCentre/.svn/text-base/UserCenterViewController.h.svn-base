@@ -1,0 +1,34 @@
+//
+//  UserCenterViewController.h
+//  Ruyicai_iPad
+//
+//  Created by baozi on 13-7-22.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+#import "RootViewController.h"
+#import "DrawMoneyViewController.h"
+#import "AccountDetailViewController.h"
+#import "FundDetailViewController.h"
+#import "IntegralDetailViewController.h"
+#import "QueryWinningViewController.h"
+#import "QueryBetViewController.h"
+#import "QueryChaseViewController.h"
+#import "QueryPresentViewController.h"
+#import "QueryTogetherViewController.h"
+#import "MyMessageViewController.h"
+#import "ModifyPasswordViewController.h"
+#import "LoginViewController.h"
+#import "RegisterViewController.h"
+#import "BindingPhoneViewController.h"
+#import "BingingIDCardViewController.h"
+@interface UserCenterViewController : RootViewController
+<UITableViewDataSource,UITableViewDelegate,DrawMoneyViewControllerDelegate,AccountDetailViewControllerDelegate,
+IntegralDetailViewContorollerDelegate,QueryWinningViewControllerDelegate,QuetyBetViewControllerDelegate,
+QueryChaseViewControllerDelegate,QueryPresentViewControllerDelegate,QueryTogetherViewControllerDelegate,MyMessageViewControllerDelegate,LoginViewControllerDelegate,bingingPhoneViewDelegete,bingingIDCardViewDelegate>
+{
+    UIView *succeedView;// 登陆成功
+    UIView * notLoginView;//未登陆
+    NSMutableArray * userInfoArray;// 用户信息
+}
+@end

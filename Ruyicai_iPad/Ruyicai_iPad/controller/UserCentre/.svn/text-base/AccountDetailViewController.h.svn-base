@@ -1,0 +1,28 @@
+//
+//  AccountDetailViewController.h
+//  Ruyicai_iPad
+//
+//  Created by baozi on 13-7-23.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+// 账户明细
+
+#import "RootViewController.h"
+#import "AccountDetailTabelViewCell.h"
+
+@class AccountDetailViewController;
+@protocol AccountDetailViewControllerDelegate <NSObject>
+
+- (void)accountDetailViewDisappear:(AccountDetailViewController *)viewController;
+
+@end
+
+
+@interface AccountDetailViewController : RootViewController
+<UITableViewDataSource,UITableViewDelegate>
+{
+    UITableView *accTableView;
+}
+@property (nonatomic,assign) id<AccountDetailViewControllerDelegate>delegate;
+
+@property (nonatomic,retain) NSMutableArray * accountDataArray;
+@end

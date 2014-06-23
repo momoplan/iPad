@@ -1,0 +1,106 @@
+//
+//  DrawMoneyRecordViewCell.m
+//  Ruyicai_iPad
+//
+//  Created by baozi on 13-7-23.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+#import "DrawMoneyRecordViewCell.h"
+
+@implementation DrawMoneyRecordViewCell
+@synthesize cellState;
+- (id)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier
+{
+    self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
+    if (self) {
+        // Initialization code
+        [self drawContentCell];
+    }
+    return self;
+}
+- (void)dealloc
+{
+    [super dealloc];
+     [stateLabel release];
+}
+#pragma mark -------- contentView
+- (void)drawContentCell
+{
+    UILabel *dateLabel =[[UILabel alloc]initWithFrame:CGRectMake( 10, 0, 300, 30)];
+    dateLabel.text = @"提现日期: 2013-7-23 15:47:31";
+    [self.contentView addSubview:dateLabel];
+    [dateLabel release];
+    
+    UILabel *label =[[UILabel alloc]initWithFrame:CGRectMake(10, 40, 50, 30)];
+    label.text = @"金额:";
+    [self.contentView addSubview:label];
+    [label release];
+    
+    UILabel *sumLabel =[[UILabel alloc]initWithFrame:CGRectMake(60, 40, 150, 30)];
+    sumLabel.text = @"50.00元";
+    sumLabel.textColor = [UIColor redColor];
+    [self.contentView addSubview:sumLabel];
+    [sumLabel release];
+    
+    stateLabel =[[UILabel alloc]initWithFrame:CGRectMake(540, 40, 60, 30)];
+    stateLabel.text =@"取消";
+    stateLabel.textColor =[UIColor grayColor];
+    [self.contentView addSubview:stateLabel];
+   
+    cancelBtn =[UIButton buttonWithType:UIButtonTypeRoundedRect];
+    cancelBtn.frame =CGRectMake(540, 10, 60, 30);
+    [cancelBtn setTitle:@"取消" forState:UIControlStateNormal];
+    [cancelBtn addTarget:self action:@selector(drawCellCancelButton:) forControlEvents:UIControlEventTouchUpInside];
+    [self.contentView addSubview:cancelBtn];
+    cancelBtn.hidden = YES;
+
+}
+- (void)refreshCellView
+{
+    int state =[cellState intValue];
+    switch (state) {
+        case 0:
+        {
+            stateLabel.text =@"取消";
+            stateLabel.textColor =[UIColor grayColor];
+             cancelBtn.hidden = YES;
+        }
+            break;
+        case 1:
+        {
+            stateLabel.text =@"成功";
+            stateLabel.textColor = [UIColor redColor];
+             cancelBtn.hidden = YES;
+        }
+            break;
+        case 2:
+        {
+            stateLabel.text =@"审核中";
+            stateLabel.textColor = [UIColor orangeColor];
+            cancelBtn.hidden = NO;
+        }
+            break;
+        case 3:
+        {
+            stateLabel.text =@"驳回";
+            stateLabel.textColor = [UIColor grayColor];
+            [cancelBtn setTitle:@"原因" forState:UIControlStateNormal];
+            cancelBtn.hidden = NO;
+        }
+        default:
+            break;
+    }
+}
+- (void)drawCellCancelButton:(id)sender
+{
+    
+}
+- (void)setSelected:(BOOL)selected animated:(BOOL)animated
+{
+    [super setSelected:selected animated:animated];
+
+    // Configure the view for the selected state
+}
+
+@end

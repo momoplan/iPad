@@ -1,0 +1,267 @@
+//
+//  QueryTogetherViewController.m
+//  Ruyicai_iPad
+//
+//  Created by baozi on 13-7-29.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+#import "QueryTogetherViewController.h"
+
+@interface QueryTogetherViewController ()
+
+@end
+
+@implementation QueryTogetherViewController
+@synthesize delegate;
+@synthesize queryTogeArray;
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+    }
+    return self;
+}
+- (void)dealloc
+{
+    [super dealloc];
+    self.delegate = nil;
+    [detailBgView release];
+    [queryTogeArray release],queryTogeArray = nil;
+    [togethTabelView release];
+
+}
+- (void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(requestComplete:) name:KRequestCompNotName object:nil];
+}
+- (void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:KRequestCompNotName object:nil];
+    
+}
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    self.view.backgroundColor =[UIColor darkGrayColor];
+	// Do any additional setup after loading the view.
+    
+    [self queryTogetherTitleView];
+    [self queryTogetherTableView];
+    [self queryTogetherCellDetailView];
+    [self queryTogetherRequest];//数据请求
+  
+}
+
+#pragma mark -------- together view
+/* 标题 */
+- (void)queryTogetherTitleView
+{
+    UILabel *titleLabel =[[UILabel alloc]initWithFrame:CGRectMake(400, 10, 150, 40)];
+    titleLabel.text = @"合买查询";
+    titleLabel.backgroundColor =[UIColor clearColor];
+    titleLabel.textAlignment = UITextAlignmentCenter;
+    titleLabel.textColor =[UIColor whiteColor];
+    titleLabel.font =[UIFont systemFontOfSize:25];
+    [self.view addSubview:titleLabel];
+    [titleLabel release];
+    
+    UIButton *queryTogetherBackBtn =[UIButton buttonWithType:UIButtonTypeCustom];
+    queryTogetherBackBtn.frame = CGRectMake(0, 0, 76, 77);
+    [queryTogetherBackBtn setImage:[UIImage imageNamed:@"narBack.png"] forState:UIControlStateNormal];
+    [queryTogetherBackBtn addTarget:self action:@selector(queryTogetherBackButtonClick:) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:queryTogetherBackBtn];
+    
+    UIButton * launchBtn =[UIButton buttonWithType:UIButtonTypeRoundedRect];
+    launchBtn.frame = CGRectMake(20, 80, 150, 30);
+    [launchBtn setTitle:@"发起合买查询" forState:UIControlStateNormal];
+    [launchBtn addTarget:self action:@selector(queryTogetherLaunchOrDocumentary:) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:launchBtn];
+    
+    UIButton * docBtn =[UIButton buttonWithType:UIButtonTypeRoundedRect];
+    docBtn.frame = CGRectMake(170, 80, 150, 30);
+    [docBtn setTitle:@"跟单查询" forState:UIControlStateNormal];
+    [docBtn addTarget:self action:@selector(queryTogetherLaunchOrDocumentary:) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:docBtn];
+}
+/* 合买列表 */
+- (void)queryTogetherTableView
+{
+   
+    togethTabelView =[[UITableView alloc]initWithFrame:CGRectMake(10, 110, 900, 600) style:UITableViewStylePlain];
+    togethTabelView.delegate = self;
+    togethTabelView.dataSource = self;
+    [self.view addSubview:togethTabelView];
+}
+/* 合买详情 */
+- (void)queryTogetherCellDetailView
+{
+    detailBgView =[[QueryTogetherDetailView alloc]initWithFrame:CGRectMake(550, 120, 360, 550)];
+    detailBgView.delegate = self;
+}
+#pragma mark ---------- RYCNetManager delegate
+/* 跟单 查询 请求*/
+- (void)queryDocumentaryRequest
+{  // 跟单 查询
+    NSMutableDictionary *mDict =[[NSMutableDictionary alloc]init];
+    [mDict setObject:[UserLoginData sharedManager].userNo forKey:@"userno"];
+    [mDict setObject:@"autoJoin" forKey:@"command"];
+    [mDict setObject:@"selectAutoJoin" forKey:@"requestType"];
+    [mDict setObject:[NSString stringWithFormat:@"%d", 0] forKey:@"pageindex"];
+    [mDict setObject:@"10" forKey:@"maxresult"];
+    [[RYCNetworkManager sharedManager] netRequestStartWith:mDict withRequestType:ASINetworkRequestTypeQueryCaseLot_AutoOrder showProgress:YES];
+    
+}
+/* 合买 查询 请求 */
+- (void)queryTogetherRequest
+{
+    // 合买查询
+    NSMutableDictionary * mDict =[[NSMutableDictionary alloc]init];
+    [mDict setObject:[UserLoginData sharedManager].userNo forKey:@"userno"];
+    [mDict setObject:@"select" forKey:@"command"];
+    [mDict setObject:@"caseLotBuyList" forKey:@"requestType"];
+    [mDict setObject:[NSString stringWithFormat:@"%d", 0] forKey:@"pageindex"];
+    [mDict setObject:@"10" forKey:@"maxresult"];
+    [[RYCNetworkManager sharedManager] netRequestStartWith:mDict withRequestType:ASINetworkRequestTypeQueryCaseLot showProgress:YES];
+}
+- (void)requestComplete:(NSNotification*)notification
+{
+    NSDictionary* dataDic = (NSDictionary*)notification.userInfo;
+    DLog(@" 我的合买  -------- %@",dataDic);
+    int reqType = [[dataDic objectForKey:KRequestTypeKey] integerValue];
+    switch (reqType) {
+        case ASINetworkRequestTypeQueryCaseLot://
+        {
+            [self queryTogetherTableDataDistionary:dataDic];
+        }
+            break;
+        case ASINetworkRequestTypeQueryCaseLot_AutoOrder://跟单
+        {
+            
+        }
+            break;
+        case ASINetworkRequestTypeQueryCaseLotDetail://合买详情
+        {
+            [self queryTogetherDataTidyDictionary:dataDic];
+        }
+            break;
+        default:
+            break;
+    }
+}
+/*  合买查询数据 整理 */
+- (void)queryTogetherTableDataDistionary:(NSDictionary *)mDic
+{
+    [self.queryTogeArray removeAllObjects];
+    NSMutableArray *muArray =[[NSMutableArray alloc]init];
+    NSArray * result =KISDictionaryHaveKey(mDic, @"result");
+    for (int i=0; i<result.count; i++) {
+        NSDictionary * dic =[result objectAtIndex:i];
+        QueryTogetherCellModel *model = [[QueryTogetherCellModel alloc]init];
+        model.caseLotId =KISDictionaryHaveKey(dic, @"caseLotId");
+        model.starter = KISDictionaryHaveKey(dic, @"starter");
+        model.lotNo = KISDictionaryHaveKey(dic, @"lotNo");
+        model.lotName = KISDictionaryHaveKey(dic, @"lotName");
+        model.buyAmt = KISDictionaryHaveKey(dic, @"buyAmt");
+        model.prizeAmt = KISDictionaryHaveKey(dic, @"prizeAmt");
+        model.displayState = KISDictionaryHaveKey(dic, @"displayState");
+        model.buyTime = KISDictionaryHaveKey(dic, @"buyTime");
+        model.prizeState = KISDictionaryHaveKey(dic, @"prizeState");
+        [muArray addObject:model];
+        [model release];
+    }
+    self.queryTogeArray = [muArray retain];
+    [muArray release];
+    [togethTabelView reloadData];
+}
+/*  合买详情 请求 */
+- (void)queryTogetherDetailRequsetCaseId:(NSString *)caseId
+{
+    NSMutableDictionary * dic = (NSMutableDictionary*)@{@"command" : @"select",@"requestType":@"caseLotDetail",@"id":caseId,@"userno":[UserLoginData sharedManager].userNo};
+    [[RYCNetworkManager sharedManager] netRequestStartWith:dic withRequestType:ASINetworkRequestTypeQueryCaseLotDetail showProgress:YES];
+}
+/*  合买 详情 数据整理 */
+- (void)queryTogetherDataTidyDictionary:(NSDictionary *)mDic
+{
+    NSDictionary * dic = KISDictionaryHaveKey(mDic, @"result");
+    QueryTogetherDetailModel * model =[[QueryTogetherDetailModel alloc]init];
+    model.caseLotId = KISDictionaryHaveKey(dic, @"caseLotId");
+    model.starter = KISDictionaryHaveKey(dic, @"starter");
+    model.lotNo = KISDictionaryHaveKey(dic, @"lotNo");
+    model.lotName = KISDictionaryHaveKey(dic, @"lotName");
+    model.lotMulti = KISDictionaryHaveKey(dic, @"lotMulti");
+    model.batchCode = KISDictionaryHaveKey(dic, @"batchCode");
+    model.betCodeHtml = KISDictionaryHaveKey(dic, @"betCodeHtml");
+    model.betCodeJson = KISDictionaryHaveKey(dic, @"betCodeJson");
+    model.display = KISDictionaryHaveKey(dic, @"display");
+    model.visibility = KISDictionaryHaveKey(dic, @"visibility");
+    model.totalAmt = KISDictionaryHaveKey(dic, @"totalAmt");
+    model.safeAmt = KISDictionaryHaveKey(dic, @"safeAmt");
+    model.hasBuyAmt = KISDictionaryHaveKey(dic, @"hasBuyAmt");
+    model.remainderAmt = [dic objectForKey:@"remainderAmt"];// KISDictionaryHaveKey(dic, @"remainderAmt");
+    model.minAmt = KISDictionaryHaveKey(dic, @"minAmt");
+    model.buyAmtByStarter = KISDictionaryHaveKey(dic, @"buyAmtByStarter");
+    model.commisionRatio = KISDictionaryHaveKey(dic, @"commisionRatio");
+    model.participantCount = KISDictionaryHaveKey(dic, @"participantCount");
+    model.buyProgress = [dic objectForKey:@"buyProgress"];// KISDictionaryHaveKey(dic, @"buyProgress");
+    model.safeProgress = KISDictionaryHaveKey(dic, @"safeProgress");
+    model.description = KISDictionaryHaveKey(dic, @"description");
+    model.displayState = KISDictionaryHaveKey(dic, @"displayState");
+    model.winCode = KISDictionaryHaveKey(dic, @"winCode");
+    model.endTime = KISDictionaryHaveKey(dic, @"endTime");
+    model.cancelCaselot = KISDictionaryHaveKey(dic, @"cancelCaselot");
+    model.canAutoJoin = KISDictionaryHaveKey(dic, @"canAutoJoin");
+    [detailBgView togetherDetailDataModel:model];
+    [self.view addSubview:detailBgView];
+}
+#pragma mark --------- detail delegate
+-(void)queryTogetherDeTailDisappear:(UIView *)view
+{
+    [view removeFromSuperview];
+}
+#pragma mark -------- together methods
+/* 返回按钮 */
+- (void)queryTogetherBackButtonClick:(id)sender
+{
+    [self.delegate queryTogetherViewDisappear:self];
+}
+/* 发起合买 or 跟单 */
+- (void)queryTogetherLaunchOrDocumentary:(id)sender
+{
+    
+}
+#pragma mark ------ together tableView delegate
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return self.queryTogeArray.count;
+}
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    return 88;
+}
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    static NSString * dequeCell = @"celled";
+    QueryTogetherTableViewCell * cell =[tableView dequeueReusableCellWithIdentifier:dequeCell];
+    if (cell == nil) {
+        cell =[[[QueryTogetherTableViewCell alloc]initWithStyle:UITableViewCellStyleDefault reuseIdentifier:dequeCell]autorelease];
+    }
+    cell.togeModel = [self.queryTogeArray objectAtIndex:indexPath.row];
+    [cell queryTogetherCellRefresh];
+    return cell;
+}
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    QueryTogetherCellModel *model =[self.queryTogeArray objectAtIndex:indexPath.row];
+    [self queryTogetherDetailRequsetCaseId:model.caseLotId];
+}
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+@end

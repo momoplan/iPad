@@ -1,0 +1,292 @@
+//
+//  MyMessageViewController.m
+//  Ruyicai_iPad
+//
+//  Created by baozi on 13-7-30.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+#import "MyMessageViewController.h"
+
+@interface MyMessageViewController ()
+
+@end
+
+@implementation MyMessageViewController
+@synthesize delegate;
+@synthesize messageArray;
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+    }
+    return self;
+}
+- (void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(requestComplete:) name:KRequestCompNotName object:nil];
+}
+- (void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:KRequestCompNotName object:nil];
+    
+}
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    self.view.backgroundColor =[UIColor darkGrayColor];
+	// Do any additional setup after loading the view.
+    [self messageTitleView];
+    [self messageTableView];
+    [self messageFeedbackView];//反馈
+    [self myMessageViewDataRequest];
+}
+- (void)dealloc{
+    [super dealloc];
+    self.delegate = nil;
+    [messageArray release],messageArray = nil;
+    [messTableView release];
+    [feedView release];
+    [textView release];
+    [phoneTextField release];
+
+}
+#pragma mark ------- message view
+/* 页面标题设置 */
+- (void)messageTitleView
+{
+    UIImageView *narImage =[[UIImageView alloc]initWithImage:[UIImage imageNamed:@"tabBar_bg.png"]];
+    narImage.frame = CGRectMake(0, 0, 930, 60);
+    [self.view addSubview:narImage];
+    [narImage release];
+    UILabel *titleLabel =[[UILabel alloc]initWithFrame:CGRectMake(400, 10, 150, 40)];
+    titleLabel.text = @"我的留言";
+    titleLabel.backgroundColor =[UIColor clearColor];
+    titleLabel.textAlignment = UITextAlignmentCenter;
+    titleLabel.textColor =[UIColor whiteColor];
+    titleLabel.font =[UIFont systemFontOfSize:25];
+    [self.view addSubview:titleLabel];
+    [titleLabel release];
+    
+    UIButton *messageBackBtn =[UIButton buttonWithType:UIButtonTypeCustom];
+    messageBackBtn.frame = CGRectMake(0, 0, 76, 77);
+    [messageBackBtn setImage:[UIImage imageNamed:@"narBack.png"] forState:UIControlStateNormal];
+    [messageBackBtn addTarget:self action:@selector(messageBackButtonClick:) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:messageBackBtn];
+}
+/* 显示留言列表 */
+- (void)messageTableView
+{
+    messTableView =[[UITableView alloc]initWithFrame:CGRectMake(10, 80, 600, 600) style:UITableViewStylePlain];
+    messTableView.delegate = self;
+    messTableView.dataSource = self;
+    [self.view addSubview:messTableView];
+}
+/*  反馈信息 */
+- (void)messageFeedbackView
+{
+    feedView =[[UIView alloc]initWithFrame:CGRectMake(620, 80, 300, 600)];
+    feedView.backgroundColor =[UIColor grayColor];
+    [self.view addSubview:feedView];
+    
+    UILabel * titLabel =[[UILabel alloc]initWithFrame:CGRectMake(20, 10, 150, 30)];
+    titLabel.font =[UIFont boldSystemFontOfSize:20];
+    titLabel.text =@"我要反馈";
+    [feedView addSubview:titLabel];
+    [titLabel release];
+    
+    UILabel *textLabel =[[UILabel alloc]initWithFrame:CGRectMake(20, 60, 200, 25)];
+    textLabel.text = @"请输入反馈内容:";
+    [feedView addSubview:textLabel];
+    [textLabel release];
+    textView =[[UITextView alloc]initWithFrame:CGRectMake(10, 90, 280, 200)];
+    textView.delegate = self;
+    textView.font =[UIFont systemFontOfSize:18];
+    [feedView addSubview:textView];
+    
+    UILabel * phoneLabel =[[UILabel alloc]initWithFrame:CGRectMake(20, 300, 150, 25)];
+    phoneLabel.text = @"联系电话:";
+    [feedView addSubview:phoneLabel];
+    [phoneLabel release];
+    phoneTextField =[[UITextField alloc]initWithFrame:CGRectMake(10, 330, 280, 30)];
+    phoneTextField.delegate = self;
+    phoneTextField.placeholder = @"联系方式";
+    phoneTextField.borderStyle = UITextBorderStyleRoundedRect;
+    [feedView addSubview:phoneTextField];
+    
+    UIButton * feedBtn =[UIButton buttonWithType:UIButtonTypeRoundedRect];
+    feedBtn.frame = CGRectMake(10, 380, 150, 40);
+    [feedBtn setTitle:@"提交反馈" forState:UIControlStateNormal];
+    [feedBtn addTarget:self action:@selector(messageFeedButtonClick:) forControlEvents:UIControlEventTouchUpInside];
+    [feedView addSubview:feedBtn];
+    
+    
+}
+#pragma mark -------------- requeset methods
+- (void)myMessageViewDataRequest
+{
+    NSMutableDictionary * mDic =[[[NSMutableDictionary alloc]init]autorelease];
+    [mDic setObject:@"feedback" forKey:@"command"];
+    [mDic setObject:@"feedBack" forKey:@"type"];
+    [mDic setObject:[UserLoginData sharedManager].userNo forKey:@"userno"];
+    [mDic setObject:[NSString stringWithFormat:@"%d",0] forKey:@"pageindex"];
+    [mDic setObject:@"10" forKey:@"maxresult"];
+    
+    [[RYCNetworkManager sharedManager] netRequestStartWith:mDic withRequestType:ASINetworkRequestTypeLeaveMessage showProgress:YES];
+}
+- (void)requestComplete:(NSNotification*)notification
+{
+    NSDictionary* dataDic = (NSDictionary*)notification.userInfo;
+    DLog(@" 我的留言 -------- %@",dataDic);
+    int reqType = [[dataDic objectForKey:KRequestTypeKey] integerValue];
+    switch (reqType) {
+        case ASINetworkRequestTypeLeaveMessage:
+        {
+            [self myMessageViewDataProcessingDictionary:dataDic];
+        }
+            break;
+        case ASINetworkRequestTypeFeedback://反馈
+        {
+            [self myMessageViewFeedInfo:dataDic];
+        }
+            break;
+        default:
+            break;
+    }
+}
+/*  留言信息 处理 */
+- (void)myMessageViewDataProcessingDictionary:(NSDictionary *)mDic
+{
+    NSString * errorCode = KISDictionaryHaveKey(mDic, @"error_code");
+    if ([errorCode isEqualToString:@"0047"]) {
+        UILabel * clabel =[[UILabel alloc]initWithFrame:CGRectMake(300, 130, 150, 30)];
+        clabel.text = @"无记录";
+        clabel.font = [UIFont boldSystemFontOfSize:20];
+        clabel.textAlignment = UITextAlignmentCenter;
+        [self.view addSubview:clabel];
+        [clabel release];
+        return;
+    }
+    
+    NSMutableArray *muArray =[[NSMutableArray alloc]init];
+    NSArray *result = KISDictionaryHaveKey(mDic, @"result");
+    for (int i=0; i<result.count; i++) {
+        NSDictionary * dic =[result objectAtIndex:i];
+        MyMessageViewCellModel * model =[[MyMessageViewCellModel alloc]init];
+        model.content = KISDictionaryHaveKey(dic, @"content");
+        model.reply = KISDictionaryHaveKey(dic, @"reply");
+        model.createTime = KISDictionaryHaveKey(dic, @"createTime");
+        model.readState = KISDictionaryHaveKey(dic, @"readState");
+        [muArray addObject:model];
+        [model release];
+    }
+    self.messageArray = [muArray retain];
+    [muArray release];
+    [messTableView reloadData];
+}
+/*  反馈信息 返回信息 处理 */
+- (void) myMessageViewFeedInfo:(NSDictionary *)mDic
+{
+    NSString * errorCode = KISDictionaryHaveKey(mDic, @"error_code");
+    NSString * message = KISDictionaryHaveKey(mDic, @"message");
+    if ([errorCode isEqualToString:@"0000"]) {
+        [self showAlertWithMessage:@"提交成功"];
+      
+    }else{
+        [self showAlertWithMessage:message];
+    }
+    phoneTextField.text = @"";
+    textView.text = @"";
+    [self myMessageViewDataRequest];
+}
+#pragma mark ---------- message methods
+- (void)messageBackButtonClick:(id)sender
+{
+    [self.delegate myMessageViewDisappear:self];
+}
+/*  提交反馈 */
+- (void)messageFeedButtonClick:(id)sender
+{
+    if (textView.text.length == 0) {
+        [self showAlertWithMessage:@"请填写反馈意见，谢谢！"];
+    }
+    if (phoneTextField.text.length !=0) {
+        if (phoneTextField.text.length !=11) {
+            [self showAlertWithMessage:@"请输入正确的手机号！"];
+        }
+    }
+    
+    NSMutableDictionary * mDic = [[[NSMutableDictionary alloc]init]autorelease];
+    [mDic setObject:@"feedback" forKey:@"command"];
+    [mDic setObject:[UserLoginData sharedManager].userNo forKey:@"userno"];
+    [mDic setObject:textView.text forKey:@"content"];
+    [mDic setObject:phoneTextField.text forKey:@"contactWay"];
+    [[RYCNetworkManager sharedManager] netRequestStartWith:mDic withRequestType:ASINetworkRequestTypeFeedback showProgress:YES];
+}
+#pragma mark ------------ textField delegate
+- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string
+{
+    if (range.length>11) {
+        return NO;
+    }
+    return YES;
+}
+- (BOOL)textFieldShouldBeginEditing:(UITextField *)textField
+{
+    CGRect rect = feedView.frame;
+    rect.origin.y -=100;
+    feedView.frame = rect;
+    return YES;
+}
+- (BOOL)textFieldShouldEndEditing:(UITextField *)textField
+{
+    CGRect rect = feedView.frame;
+    rect.origin.y +=100;
+    feedView.frame = rect;
+    return YES;
+}
+- (BOOL)textFieldShouldReturn:(UITextField *)textField
+{
+    [textField resignFirstResponder];
+    return YES;
+}
+
+#pragma mark ----------- textView delegate
+- (BOOL)textViewShouldBeginEditing:(UITextView *)textView
+{
+    return YES;
+}
+- (BOOL)textViewShouldEndEditing:(UITextView *)textView
+{
+    return YES;
+}
+#pragma mark ----------- tableView delegate
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return self.messageArray.count;
+}
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    return 80;
+}
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    static NSString * dequeCell = @"celled";
+    MyMessageTableViewCell * cell =[tableView dequeueReusableCellWithIdentifier:dequeCell];
+    if (cell == nil) {
+        cell =[[[MyMessageTableViewCell alloc]initWithStyle:UITableViewCellStyleDefault reuseIdentifier:dequeCell]autorelease];
+    }
+    cell.model = [self.messageArray objectAtIndex:indexPath.row];
+    [cell messageTableCellRefresh];
+    return cell;
+}
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+@end

@@ -1,0 +1,65 @@
+//
+//  QueryChaseDetailTableCell.m
+//  Ruyicai_iPad
+//
+//  Created by baozi on 13-7-29.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+#import "QueryChaseDetailTableCell.h"
+
+@implementation QueryChaseDetailTableCell
+
+- (id)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier
+{
+    self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
+    if (self) {
+        // Initialization code
+        
+        UILabel * stageLabel =[[UILabel alloc]initWithFrame:CGRectMake(10, 0, 150, 20)];
+        stageLabel.text = @"期号: 2012128";
+        stageLabel.font =[UIFont systemFontOfSize:15];
+        [self.contentView addSubview:stageLabel];
+        [stageLabel release];
+        
+        UILabel *sumLabel =[[UILabel alloc]initWithFrame:CGRectMake(10, 20, 150, 20)];
+        sumLabel.text =@"金额:2元";
+        sumLabel.font = stageLabel.font;
+        [self.contentView addSubview:sumLabel];
+        [sumLabel release];
+        
+        UILabel *numLabel = [[UILabel alloc]initWithFrame:CGRectMake(10, 40, 250, 20)];
+        numLabel.text = @"开奖号码:05,09,12,29,30,31|05";
+        numLabel.font = stageLabel.font;
+        [self.contentView addSubview:numLabel];
+        [numLabel release];
+        
+        UILabel * winLabel =[[UILabel alloc]initWithFrame:CGRectMake(10, 60, 150, 20)];
+        winLabel.text = @"中奖金额:0元";
+        winLabel.font = stageLabel.font;
+        [self.contentView addSubview:winLabel];
+        [winLabel release];
+        
+        UILabel * mulLabel =[[UILabel alloc]initWithFrame:CGRectMake(180, 0, 120, 20)];
+        mulLabel.text = @"倍数:1倍";
+        mulLabel.font = stageLabel.font;
+        [self.contentView addSubview:mulLabel];
+        [mulLabel release];
+        
+        UILabel *stateLabel =[[UILabel alloc]initWithFrame:CGRectMake(180, 20, 120, 20)];
+        stateLabel.text = @"状态:已出票";
+        stageLabel.font = stageLabel.font;
+        [self.contentView addSubview:stateLabel];
+        [stateLabel release];
+    }
+    return self;
+}
+
+- (void)setSelected:(BOOL)selected animated:(BOOL)animated
+{
+    [super setSelected:selected animated:animated];
+
+    // Configure the view for the selected state
+}
+
+@end

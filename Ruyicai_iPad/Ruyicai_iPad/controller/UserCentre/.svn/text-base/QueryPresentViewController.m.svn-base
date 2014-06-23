@@ -1,0 +1,285 @@
+//
+//  QueryPresentViewController.m
+//  Ruyicai_iPad
+//
+//  Created by baozi on 13-7-29.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+#import "QueryPresentViewController.h"
+
+@interface QueryPresentViewController ()
+
+@end
+
+@implementation QueryPresentViewController
+@synthesize delegate;
+@synthesize queryGiftArray;
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+    }
+    return self;
+}
+
+- (void)dealloc
+{
+    [super dealloc];
+    self.delegate = nil;
+    [queryGiftArray release],queryGiftArray = nil;
+    [presentTableView release];
+    [cLabel release];
+
+
+}
+- (void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(requestComplete:) name:KRequestCompNotName object:nil];
+}
+- (void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:KRequestCompNotName object:nil];
+    
+}
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    self.view.backgroundColor =[UIColor darkGrayColor];
+	// Do any additional setup after loading the view.
+    [self queryPresentRequestDataGift:YES];
+    
+    [self queryPresentTitleView];
+    [self queryPresentTableView];//赠送列表
+    
+    presentDetailView  =[[UIView alloc]initWithFrame:CGRectMake(550, 120, 360, 550)];
+
+}
+- (void)queryPresentRequestDataGift:(BOOL)isGift
+{
+    NSMutableDictionary * mDict =[[NSMutableDictionary alloc]init];
+    [mDict setObject:@"AllQuery" forKey:@"command"];
+    if(isGift)
+	{
+		[mDict setObject:@"gift" forKey:@"type"];
+	}
+	else
+	{
+		[mDict setObject:@"gifted" forKey:@"type"];
+	}
+	[mDict setObject:[UserLoginData sharedManager].userNo forKey:@"userno"];
+    [mDict setObject:@"10" forKey:@"maxresult"];
+    [mDict setObject:[NSString stringWithFormat:@"%d",1] forKey:@"pageindex"];
+    [[RYCNetworkManager sharedManager] netRequestStartWith:mDict withRequestType:ASINetworkRequestTypeQueryGift showProgress:YES];
+}
+#pragma mark ---------- present View
+- (void)queryPresentTitleView
+{
+    UILabel *titleLabel =[[UILabel alloc]initWithFrame:CGRectMake(400, 10, 150, 40)];
+    titleLabel.text = @"赠送查询";
+    titleLabel.backgroundColor =[UIColor clearColor];
+    titleLabel.textAlignment = UITextAlignmentCenter;
+    titleLabel.textColor =[UIColor whiteColor];
+    titleLabel.font =[UIFont systemFontOfSize:25];
+    [self.view addSubview:titleLabel];
+    [titleLabel release];
+    
+    UIButton *queryPresentBackBtn =[UIButton buttonWithType:UIButtonTypeCustom];
+    queryPresentBackBtn.frame = CGRectMake(0, 0, 76, 77);
+    [queryPresentBackBtn setImage:[UIImage imageNamed:@"narBack.png"] forState:UIControlStateNormal];
+    [queryPresentBackBtn addTarget:self action:@selector(queryPresentBackButtonClick:) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:queryPresentBackBtn];
+#define TAG_PRESENT_GRANTBTN 101
+#define TAG_PRESENT_SENDBTN 102
+    UIButton *grantBtn =[UIButton buttonWithType:UIButtonTypeRoundedRect];
+    grantBtn.frame = CGRectMake(20, 80, 150, 30);
+    grantBtn.tag =TAG_PRESENT_GRANTBTN;
+    [grantBtn setTitle:@"赠出的彩票" forState:UIControlStateNormal];
+    [grantBtn addTarget:self action:@selector(queryPresentGrantOrSend:) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:grantBtn];
+    
+    UIButton *sendBtn =[UIButton buttonWithType:UIButtonTypeRoundedRect];
+    sendBtn.frame = CGRectMake(170, 80, 150, 30);
+    sendBtn.tag = TAG_PRESENT_SENDBTN;
+    [sendBtn setTitle:@"收到的彩票" forState:UIControlStateNormal];
+    [sendBtn addTarget:self action:@selector(queryPresentGrantOrSend:) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:sendBtn];
+    
+
+}
+- (void)queryPresentTableView
+{
+    presentTableView =[[UITableView alloc]initWithFrame:CGRectMake(0, 110, 900, 600) style:UITableViewStylePlain];
+    presentTableView.delegate = self;
+    presentTableView.dataSource = self;
+    [self.view addSubview:presentTableView];
+}
+- (void)queryPresentDetailViewGiftModel:(QueryGiftTableCellModel*)model
+{
+    [self.view addSubview:presentDetailView];
+
+    for (UIView * view in presentDetailView.subviews) {
+        [view removeFromSuperview];
+        view = nil;
+    }
+    UIImageView *imgView =[[UIImageView alloc]initWithImage:[UIImage imageNamed:@"queryDetailBg.png"]];
+    imgView.frame = CGRectMake(0, 0, presentDetailView.frame.size.width, presentDetailView.frame.size.height);
+    [presentDetailView addSubview:imgView];
+    [imgView release];
+    
+    UIButton *closeBtn =[UIButton buttonWithType:UIButtonTypeCustom];
+    closeBtn.frame = CGRectMake(305, 0, 55, 55);
+    [closeBtn setImage:[UIImage imageNamed:@"queryclose.png"] forState:UIControlStateNormal];
+    [closeBtn addTarget:self action:@selector(queryDetailCloseButton:) forControlEvents:UIControlEventTouchUpInside];
+    [presentDetailView addSubview:closeBtn]; //125162466
+    
+    UILabel *preTitLabel =[[UILabel alloc]initWithFrame:CGRectMake(0, 0, presentDetailView.frame.size.width, 55)];
+    preTitLabel.text = @"增彩详情";
+    preTitLabel.textAlignment = UITextAlignmentCenter;
+    preTitLabel.backgroundColor =[UIColor clearColor];
+    [presentDetailView addSubview:preTitLabel];
+    [preTitLabel release];
+    
+    NSArray * leArray =[[NSArray alloc]initWithObjects:@"彩种:",@"期号:",@"订单号:",@"受赠人:",@"增彩时间:",@"金额:",@"倍数:",@"注数:",@"出票状态:",@"开奖号码:",@"投注内容:",nil];
+    NSArray *riArray = @[model.lotName,model.batchCode,model.orderId,model.toMobileId,model.orderTime,model.amount,model.lotMulti,model.betNum,model.stateMemo,model.winCode,@"",];
+//    NSArray *riArray =[[NSArray alloc]initWithObjects:@"双色球",@"第2012147期",@"BJ2012121207879035",@"13051829298",@"2012-12-12 16:18:36",@"2元",@"1倍",@"1注",@"已出票",@"02,12,15,23,24,32|09",@"",nil];
+    
+    for (int i=0; i<leArray.count; i++) {
+        UILabel *detailLabel =[[UILabel alloc]initWithFrame:CGRectMake(10, 60+(40*i), 100, 25)];
+        detailLabel.text = [leArray objectAtIndex:i];
+        detailLabel.backgroundColor =[UIColor clearColor];
+        detailLabel.textColor =[UIColor blueColor];
+        detailLabel.textAlignment = UITextAlignmentCenter;
+        [presentDetailView addSubview:detailLabel];
+        [detailLabel release];
+        
+        UILabel *messLabel =[[UILabel alloc]initWithFrame:CGRectMake(110, detailLabel.frame.origin.y, 200, 25)];
+        messLabel.backgroundColor =[UIColor clearColor];
+        messLabel.text =[riArray objectAtIndex:i];
+        [presentDetailView addSubview:messLabel];
+        [messLabel release];
+    }
+    [leArray release];
+    
+    UITextView *contentTextView =[[UITextView alloc]initWithFrame:CGRectMake(110, 460, 200, 70)];
+    contentTextView.text = model.batchCode;
+    contentTextView.font = [UIFont systemFontOfSize:17];
+    [presentDetailView addSubview:contentTextView];
+    [contentTextView release];
+    
+}
+#pragma mark ---------- RYCNetManager delegate
+- (void)requestComplete:(NSNotification*)notification
+{
+    NSDictionary* dataDic = (NSDictionary*)notification.userInfo;
+    DLog(@" 赠彩 查询 -------- %@",dataDic);
+    int reqType = [[dataDic objectForKey:KRequestTypeKey] integerValue];
+    switch (reqType) {
+        case ASINetworkRequestTypeQueryGift://
+        {
+            [self queryGiftTabelDataDictionary:dataDic];
+        }
+            break;
+        default:
+            break;
+    }
+}
+/* 赠送 查询 数据处理 */
+- (void)queryGiftTabelDataDictionary:(NSDictionary *)dataDic
+{
+    NSString * errorCode = KISDictionaryHaveKey(dataDic, @"error_code");
+    if ([errorCode isEqualToString:@"0047"]) {//无记录
+       cLabel = [[UILabel alloc] initWithFrame:CGRectMake(200, 150, 320, 50)];
+        cLabel.text = @"无记录";
+        cLabel.textAlignment = UITextAlignmentCenter;
+        cLabel.textColor = [UIColor whiteColor];
+        cLabel.font = [UIFont boldSystemFontOfSize:20];
+        cLabel.backgroundColor = [UIColor clearColor];
+        [self.view addSubview:cLabel];
+        [presentTableView removeFromSuperview];
+        return;
+    }
+    
+    [cLabel removeFromSuperview];
+    [self.view addSubview:presentTableView];
+    [self.queryGiftArray removeAllObjects];
+    NSMutableArray * muArray =[[NSMutableArray alloc]init];
+    NSArray * result =KISDictionaryHaveKey(dataDic, @"result");
+    for (int i=0; i<result.count; i++) {
+        NSDictionary * dic =[result objectAtIndex:i];
+        QueryGiftTableCellModel *model =[[QueryGiftTableCellModel alloc]init];
+        model.orderId = KISDictionaryHaveKey(dic, @"orderId");
+        model.toMobileId = KISDictionaryHaveKey(dic, @"toMobileId");
+        model.orderTime = KISDictionaryHaveKey(dic, @"orderTime");
+        model.amount = KISDictionaryHaveKey(dic, @"amount");
+        model.batchCode = KISDictionaryHaveKey(dic, @"batchCode");
+        model.lotMulti = KISDictionaryHaveKey(dic, @"lotMulti");
+        model.betNum = KISDictionaryHaveKey(dic, @"betNum");
+        model.betCode = KISDictionaryHaveKey(dic, @"betCode");
+        model.lotNo = KISDictionaryHaveKey(dic, @"lotNo");
+        model.lotName = KISDictionaryHaveKey(dic, @"lotName");
+        model.stateMemo = KISDictionaryHaveKey(dic, @"stateMemo");
+        model.prizeState = KISDictionaryHaveKey(dic, @"prizeState");
+        model.winCode =KISDictionaryHaveKey(dataDic, @"winCode" );
+        [muArray addObject:model];
+        [model release];
+    }
+    self.queryGiftArray = [muArray retain];
+    [muArray release];
+    [presentTableView reloadData];
+}
+#pragma mark -------- present methods
+/*  销毁当前viewController */
+- (void)queryPresentBackButtonClick:(id)sender
+{
+    [self.delegate queryPresentViewDisappear:self];
+}
+/*  赠出的 or 收到的 */
+- (void)queryPresentGrantOrSend:(id)sender
+{
+    UIButton * btn = (UIButton *)sender;
+    if (TAG_PRESENT_GRANTBTN == btn.tag ) {//赠出得
+        [self queryPresentRequestDataGift:YES];
+    }else{
+        [self queryPresentRequestDataGift:NO];
+    }
+}
+/* 关闭详情view */
+- (void)queryDetailCloseButton:(id)sender
+{
+    [presentDetailView removeFromSuperview];
+}
+#pragma mark -------- present tableView delegate
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return self.queryGiftArray.count;
+}
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    return 88;
+}
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    static NSString *dequeCell =@"celled";
+    QueryPresentTableViewCell * cell =[tableView dequeueReusableCellWithIdentifier:dequeCell];
+    if (cell == nil) {
+        cell =[[[QueryPresentTableViewCell alloc]initWithStyle:UITableViewCellStyleDefault reuseIdentifier:dequeCell]autorelease];
+    }
+    cell.giftModel = [self.queryGiftArray objectAtIndex:indexPath.row];
+    [cell queryPresentCellRefresh];
+    return cell;
+}
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    [self queryPresentDetailViewGiftModel:[self.queryGiftArray objectAtIndex:indexPath.row]];
+}
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+@end

@@ -1,0 +1,208 @@
+//
+//  PhoneCardPaymentViewController.m
+//  Ruyicai_iPad
+//
+//  Created by Zhang Xiaofeng on 13-7-29.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+#import "PhoneCardPaymentViewController.h"
+#import "RYCCommon.h"
+#import "RYCImageNamed.h"
+
+@interface PhoneCardPaymentViewController ()
+
+- (IBAction)selectCardAmountAction;
+
+- (IBAction)okClick;
+- (IBAction)backClick:(id)sender;
+
+@end
+
+@implementation PhoneCardPaymentViewController
+@synthesize cardAmountButton = m_cardAmountButton;
+@synthesize cardNoTextField = m_cardNoTextField;
+@synthesize cardPasswordTextField = m_cardPasswordTextField;
+@synthesize cardAmount = m_cardAmount;
+@synthesize delegate;
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+    }
+    return self;
+}
+
+- (void)dealloc
+{
+    [m_cardAmountButton release];
+    [m_cardNoTextField release];
+    [m_cardPasswordTextField release];
+    [super dealloc];
+}
+
+- (void)viewDidDisappear:(BOOL)animated
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:KRequestCompNotName object:nil];
+    [super viewDidDisappear:animated];
+}
+
+- (void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(requestComplete:) name:KRequestCompNotName object:nil];
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+
+    [self.view addSubview:getTopLableWithTitle(@"手机充值卡充值")];
+
+    m_cardNoTextField.delegate = self;
+    m_cardPasswordTextField.delegate = self;
+    
+    self.cardAmount = @"100";
+    [self.cardAmountButton setTitle:[NSString stringWithFormat:@"%@元", self.cardAmount] forState:UIControlStateNormal];
+    
+    NSMutableDictionary* mDict = [NSMutableDictionary dictionaryWithCapacity:1];
+    [mDict setObject:@"information" forKey:@"command"];
+    [mDict setObject:@"messageContent" forKey:@"newsType"];
+    [mDict setObject:@"phoneCardChargeDescriptionHtml" forKey:@"keyStr"];//描述语
+    
+    [[RYCNetworkManager sharedManager] netRequestStartWith:mDict withRequestType:ASINetworkReqestTypeChargePage showProgress:NO];
+
+}
+- (IBAction)backClick:(id)sender
+{
+    [m_cardNoTextField resignFirstResponder];
+    [m_cardPasswordTextField resignFirstResponder];
+    [self.delegate dismissPhoneCardView:self];
+}
+
+- (IBAction)selectCardAmountAction
+{
+    [m_cardNoTextField resignFirstResponder];
+    [m_cardPasswordTextField resignFirstResponder];
+    
+    PickerViewController * viewController =[[PickerViewController alloc]init];
+    viewController.delegate = self;
+    
+    m_popoverView =[[UIPopoverController alloc]initWithContentViewController:viewController];
+    m_popoverView.popoverContentSize = CGSizeMake(350, 260);
+    [m_popoverView presentPopoverFromRect:CGRectMake(125, 110, 350, 100) inView:self.view permittedArrowDirections:UIPopoverArrowDirectionUp animated:YES];
+    
+    NSArray * array =[[NSArray alloc]initWithObjects:@"10",@"20",@"30",@"50",@"100",@"200",@"300",@"500", nil];
+    [viewController setPickerViewDataArray:array selectNum:pickViewSelectNum];
+    [array release];
+    
+    [viewController release];
+}
+- (void)pickViewCancelClick
+{
+    [m_popoverView dismissPopoverAnimated:YES];
+}
+
+- (void)pickerViewController:(PickerViewController *)viewController
+                selectRowNum:(NSString*)selectRow
+{
+    NSLog(@"%@", selectRow);
+    pickViewSelectNum = viewController.pickerSelectNum;
+    self.cardAmount = selectRow;
+    [self.cardAmountButton setTitle:[NSString stringWithFormat:@"%@元", self.cardAmount] forState:UIControlStateNormal];
+}
+//－－－－－－释放
+- (void)popoverControllerDidDismissPopover:(UIPopoverController *)popoverController
+{
+    [m_popoverView release], m_popoverView = nil;
+}
+
+- (IBAction)okClick
+{
+    [m_cardNoTextField resignFirstResponder];
+    [m_cardPasswordTextField resignFirstResponder];
+
+    if([self.cardAmountButton currentTitle].length == 0 || KISEmptyOrEnter(self.cardNoTextField.text) || KISEmptyOrEnter(self.cardPasswordTextField.text))
+	{
+		[self showAlertWithMessage:@"请把信息填写完整"];
+        return;
+	}
+    NSMutableDictionary* dict = [NSMutableDictionary dictionaryWithCapacity:5];
+    [dict setObject:@"recharge" forKey:@"command"];
+    [dict setObject:@"02" forKey:@"rechargetype"];
+    [dict setObject:[UserLoginData sharedManager].userNo forKey:@"userno"];
+    [dict setObject:@"" forKey:@"subchannel"];
+    NSString* amtValue = [NSString stringWithFormat:@"%d", [self.cardAmount intValue] * 100];
+    [dict setObject:amtValue  forKey:@"amount"];
+    [dict setObject:self.cardNoTextField.text forKey:@"cardno"];
+    [dict setObject:self.cardPasswordTextField.text forKey:@"cardpwd"];
+    [dict setObject:@"" forKey:@"cardtype"];
+    
+    [[RYCNetworkManager sharedManager] netRequestStartWith:dict withRequestType:ASINetworkRequestTypeChargePhoneCard showProgress:YES];
+}
+
+- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
+{
+    [m_cardNoTextField resignFirstResponder];
+    [m_cardPasswordTextField resignFirstResponder];
+}
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+#pragma mark －－－－联网成功
+- (void)requestComplete:(NSNotification*)notification
+{
+    NSDictionary* dataDic = (NSDictionary*)notification.userInfo;
+    int reqType = [[dataDic objectForKey:KRequestTypeKey] integerValue];
+    switch (reqType) {
+        case ASINetworkReqestTypeChargePage:
+            [self setDescriptionViewWithContent:KISDictionaryHaveKey(dataDic, @"content")];
+            break;
+        case ASINetworkRequestTypeChargePhoneCard:
+            [self showAlertWithMessage:KISDictionaryHaveKey(dataDic, @"message")];
+            break;
+        default:
+            break;
+    }
+}
+
+- (void)setDescriptionViewWithContent:(NSString*)contentStr
+{
+    //    NSString *html = [NSString stringWithFormat:@"<body style='background-color:#EEEEEE'>%@</body>", contentStr];
+    NSString* html = [NSString stringWithFormat:@"<style type=\"text/css\">body{line-height:30px; background-color:#EEEEEE}</style>%@", contentStr];
+    UIWebView* webView = [[UIWebView alloc] initWithFrame:CGRectMake(510, 141, 400, 578)];
+    webView.layer.cornerRadius = 3;
+    webView.layer.masksToBounds = YES;
+    UIScrollView *scroller = [webView.subviews objectAtIndex:0];//去掉阴影
+    if (scroller) {
+        for (UIView *v in [scroller subviews]) {
+            if ([v isKindOfClass:[UIImageView class]]) {
+                [v removeFromSuperview];
+            }
+        }
+    }
+    webView.delegate = self;
+    webView.backgroundColor = [UIColor clearColor];
+    webView.dataDetectorTypes = UIDataDetectorTypeLink|UIDataDetectorTypePhoneNumber;//下划线类型
+    [webView loadHTMLString:html baseURL:nil];
+    [self.view addSubview:webView];
+    [webView release];
+}
+
+- (BOOL)webView:(UIWebView *)webViewLocal shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
+{
+	NSString *myURL = [[request URL] absoluteString];
+    NSLog(@"%@", myURL);//进来时：about:blank  http://www.ruyicai.com/
+    if([myURL hasPrefix:@"http:"] || [myURL hasPrefix:@"tel:"])
+	{
+        [[UIApplication sharedApplication] openURL:[NSURL URLWithString:myURL]];
+        return NO;
+    }
+	return YES;
+}
+@end

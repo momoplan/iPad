@@ -1,0 +1,330 @@
+//
+//  DrawMoneyViewController.m
+//  Ruyicai_iPad
+//
+//  Created by baozi on 13-7-22.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+#import "DrawMoneyViewController.h"
+
+@interface DrawMoneyViewController ()
+{
+    NSString *isNight;
+}
+@end
+
+@implementation DrawMoneyViewController
+@synthesize delegate;
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+    }
+    return self;
+}
+- (void)dealloc
+{
+    [super dealloc];
+    [recordView release];
+    [bankView release];
+    [aliPayView release];
+}
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+	// Do any additional setup after loading the view.
+    self.view.backgroundColor = [UIColor darkGrayColor];
+    isNight = @"night";
+    [self drawTitleView];
+    
+    [self drawBankCardView];//银行卡
+    [self drawAlipayViewCreate];//支付宝
+    [self drawRecordFormViewCreate];//记录
+    
+    [self drawAttentionMatterView];
+}
+#pragma mark ------------- view create
+/* 标题信息 */
+- (void)drawTitleView
+{
+    UILabel *titleLabel =[[UILabel alloc]initWithFrame:CGRectMake(400, 10, 150, 40)];
+    titleLabel.text = @"账户提现";
+    titleLabel.backgroundColor =[UIColor clearColor];
+    titleLabel.textAlignment = UITextAlignmentCenter;
+    titleLabel.textColor =[UIColor whiteColor];
+    titleLabel.font =[UIFont systemFontOfSize:25];
+    [self.view addSubview:titleLabel];
+    [titleLabel release];
+    
+    UIButton *drawBackBtn =[UIButton buttonWithType:UIButtonTypeRoundedRect];
+    drawBackBtn.frame = CGRectMake(0, 70, 76, 77);
+    [drawBackBtn setImage:[UIImage imageNamed:@"viewback.png"] forState:UIControlStateNormal];
+    [drawBackBtn addTarget:self action:@selector(drawBackButtonClick:) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:drawBackBtn];
+    
+#define TAG_DRAWKIND_BUTTON 100
+    NSArray *array =[[NSArray alloc]initWithObjects:@"提现到银行卡",@"提现到支付宝",@"提现记录", nil];
+    for (int i=0; i<array.count; i++) {
+        UIButton *button =[UIButton buttonWithType:UIButtonTypeRoundedRect];
+        button.frame = CGRectMake(80+(150*i), 80, 150, 40);
+        button.tag = TAG_DRAWKIND_BUTTON  +i;
+        [button setTitle:[array objectAtIndex:i] forState:UIControlStateNormal];
+        [button addTarget:self action:@selector(drawMoneyKindButton:) forControlEvents:UIControlEventTouchUpInside];
+        [self.view addSubview:button];
+        
+    }
+}
+/*  银行卡提现 */
+- (void)drawBankCardView
+{
+    bankView =[[UIView alloc]initWithFrame:CGRectMake(0, 150, 600, 500)];
+    bankView.backgroundColor =[UIColor whiteColor];
+    [self.view addSubview:bankView];
+   
+    
+    NSArray *nameAry =[[NSArray alloc]initWithObjects:@"持卡人名:",@"开卡银行:",@"银行卡号:", @"提现金额:",@"登录密码:",nil];
+    for (int i=0; i<nameAry.count; i++) {
+        UILabel *nameLabel =[[UILabel alloc]initWithFrame:CGRectMake(30, 30+(50*i), 120, 40)];
+        nameLabel.text =[nameAry objectAtIndex:i];
+        nameLabel.font = [UIFont boldSystemFontOfSize:22];
+        if ([isNight isEqualToString:@"night"]) {
+            nameLabel.backgroundColor =[UIColor clearColor];
+            nameLabel.textColor = [UIColor blackColor];
+        }else
+        {
+            nameLabel.backgroundColor = [UIColor darkGrayColor];
+            nameLabel.textColor = [UIColor whiteColor];
+        }
+        [bankView addSubview:nameLabel];
+        [nameLabel release];
+    }
+   
+    UITextField *nameTextField =[[UITextField alloc]initWithFrame:CGRectMake(150,40, 180, 30)];
+    nameTextField.placeholder = @"银行开户人真实姓名";
+    nameTextField.delegate = self;
+    [bankView addSubview:nameTextField];
+    [nameTextField release];
+    
+    UIButton * cardButton =[UIButton buttonWithType:UIButtonTypeRoundedRect];
+    cardButton.frame = CGRectMake(nameTextField.frame.origin.x, nameTextField.frame.origin.y+50, nameTextField.frame.size.width, 30);
+    [cardButton setTitle:@"选择银行" forState:UIControlStateNormal];
+    [cardButton addTarget:self action:@selector(drawSelectBankCardButton:) forControlEvents:UIControlEventTouchUpInside];
+    [bankView addSubview:cardButton];
+    
+    UITextField *cardTextField =[[UITextField alloc]initWithFrame:CGRectMake(cardButton.frame.origin.x, cardButton.frame.origin.y+50, nameTextField.frame.size.width, 30)];
+    cardTextField.placeholder= @"输入准确的银行卡号";
+    cardTextField.delegate = self;
+    [bankView addSubview:cardTextField];
+    [cardTextField release];
+    
+    UITextField *monTextField =[[UITextField alloc]initWithFrame:CGRectMake(cardTextField.frame.origin.x,cardTextField.frame.origin.y+50, nameTextField.frame.size.width, 30)];
+    monTextField.text = @"10";
+        if ([isNight isEqualToString:@"night"]) {
+        monTextField.backgroundColor = [UIColor darkGrayColor];
+    }else{
+        monTextField.backgroundColor = [UIColor whiteColor];
+    }
+    monTextField.textColor =[UIColor redColor];
+
+    [bankView addSubview:monTextField];
+    [monTextField release];
+    
+    UITextField *passTextField =[[UITextField alloc]initWithFrame:CGRectMake(cardTextField.frame.origin.x,monTextField.frame.origin.y+50, nameTextField.frame.size.width, 30)];
+    passTextField.placeholder =@"输入如意彩登录密码";
+    passTextField.delegate = self;
+    [bankView addSubview:passTextField ];
+    [passTextField release];
+    
+    UIButton * drawBtn =[UIButton buttonWithType:UIButtonTypeRoundedRect];
+    [drawBtn setBackgroundImage:[UIImage imageNamed:@"yellow_button_normal.png"] forState:UIControlStateNormal];
+    drawBtn.frame = CGRectMake(100, 300, 180,50);
+    [drawBtn setTitle:@"提现" forState:UIControlStateNormal];
+    [drawBtn addTarget:self action:@selector(drawMoneyToBankCardButton:) forControlEvents:UIControlEventTouchUpInside];
+    [bankView addSubview:drawBtn];
+    
+}
+/*  提现到支付宝 */
+- (void)drawAlipayViewCreate
+{
+    aliPayView =[[UIView alloc]initWithFrame:CGRectMake(0, 150, 600, 500)];
+    aliPayView.backgroundColor =[UIColor whiteColor];
+//    [self.view addSubview:aliPayView];
+    
+    
+    NSArray *nameAry =[[NSArray alloc]initWithObjects:@"可提现金额:",@"支付宝账号:",@"真实姓名:",@"提现金额:",@"登录密码:", nil];
+    for (int i=0; i<nameAry.count; i++) {
+        UILabel *tetLabel =[[UILabel alloc]initWithFrame:CGRectMake(30, 50+(50*i), 120, 30)];
+        tetLabel.text = [nameAry objectAtIndex:i];
+        if ([isNight isEqualToString:@"night"]) {
+            tetLabel.backgroundColor =[UIColor darkGrayColor];
+            tetLabel.textColor =[UIColor whiteColor];
+        }else
+        {
+            tetLabel.backgroundColor =[UIColor darkGrayColor];
+            tetLabel.textColor =[UIColor whiteColor];
+        }
+        [aliPayView addSubview:tetLabel];
+        [tetLabel release];
+    }
+    UILabel *remLabel =[[UILabel alloc]initWithFrame:CGRectMake(160, 50, 180, 40)];
+    remLabel.text = @"200.00元";
+    remLabel.textColor =[UIColor redColor];
+    [aliPayView addSubview:remLabel];
+    [remLabel release];
+    
+    UITextField *accTextField =[[UITextField alloc]initWithFrame:CGRectMake(160, 100, 180, 40)];
+    accTextField.placeholder = @"支付宝账号";
+    if ([isNight isEqualToString:@"night"]) {
+        accTextField.backgroundColor =[UIColor darkGrayColor];
+        accTextField.textColor =[UIColor whiteColor];
+    }else{
+        accTextField.backgroundColor =[UIColor clearColor];
+        accTextField.textColor = [UIColor blackColor];
+    }
+    [aliPayView addSubview:accTextField];
+    [accTextField release];
+    
+    UITextField * nameTextField =[[UITextField alloc]initWithFrame:CGRectMake(accTextField.frame.origin.x, accTextField.frame.origin.y+50, accTextField.frame.size.width, 40)];
+    nameTextField.placeholder = @"认证的真实姓名";
+    [aliPayView addSubview:nameTextField];
+    [nameTextField release];
+    
+    UITextField *monTextField =[[UITextField alloc]initWithFrame:CGRectMake(accTextField.frame.origin.x, nameTextField.frame.origin.y+50, accTextField.frame.size.width, 40)];
+    monTextField.textColor =[UIColor redColor];
+    monTextField.text = @"10";
+    [aliPayView addSubview:monTextField ];
+    [monTextField release];
+    
+    UITextField *passTextField =[[UITextField alloc]initWithFrame:CGRectMake(accTextField.frame.origin.x, monTextField.frame.origin.y+50, accTextField.frame.size.width, 40)];
+    passTextField.placeholder = @"如意彩登录密码";
+    [aliPayView addSubview:passTextField];
+    [passTextField release];
+    
+    UIButton * drawBtn =[UIButton buttonWithType:UIButtonTypeRoundedRect];
+    [drawBtn setBackgroundImage:[UIImage imageNamed:@"yellow_button_normal.png"] forState:UIControlStateNormal];
+    drawBtn.frame = CGRectMake(100, 300, 180,50);
+    [drawBtn setTitle:@"提现" forState:UIControlStateNormal];
+    [drawBtn addTarget:self action:@selector(drawMoneyToBankCardButton:) forControlEvents:UIControlEventTouchUpInside];
+    [aliPayView addSubview:drawBtn];
+}
+/*  提现记录 */
+- (void)drawRecordFormViewCreate
+{
+    recordView =[[UIView alloc]initWithFrame:CGRectMake(0, 150, 600, 500)];
+    recordView.backgroundColor =[UIColor whiteColor];
+//    [self.view addSubview:recordView];
+    
+    
+    UITableView *recordTableView =[[UITableView alloc]initWithFrame:CGRectMake(0, 0, 600, 500) style:UITableViewStylePlain];
+    recordTableView.delegate = self;
+    recordTableView.dataSource = self;
+    [recordView addSubview:recordTableView];
+    [recordTableView release];
+}
+/* 注意事项 */
+- (void)drawAttentionMatterView
+{
+    UIView *attView =[[UIView alloc]initWithFrame:CGRectMake(610, 150, 300, 500)];
+    [self.view addSubview:attView];
+    [attView release];
+    UITextView * attTextView =[[UITextView alloc]initWithFrame:CGRectMake(0, 0, attView.frame.size.width, attView.frame.size.height)];
+    attTextView.font =[UIFont systemFontOfSize:17];
+    attTextView.textColor =[UIColor orangeColor];
+    attTextView.text = @"提现注意事项：\n 1.单笔提现金额最少10元；";
+    attTextView.editable = NO;
+    [attView addSubview:attTextView];
+    [attTextView release];
+}
+#pragma mark --------- draw menthods
+/* 返回按钮 */
+- (void)drawBackButtonClick:(id)sender
+{
+    [self.delegate drawMoneyViewDisappear:self];
+}
+/* 提现种类 */
+- (void)drawMoneyKindButton:(id)sender
+{
+    [self drawViewRemove];
+    UIButton *btn = (UIButton *)sender;
+    switch (btn.tag -TAG_DRAWKIND_BUTTON) {
+        case 0:
+        {
+            [self.view addSubview:bankView];
+        }
+            break;
+         case 1:
+        {
+            [self.view addSubview:aliPayView];
+        }
+            break;
+        case 2:
+        {
+            [self.view addSubview:recordView];
+        }
+            break;
+        default:
+            break;
+    }
+}
+/* 银行卡选择 */
+- (void)drawSelectBankCardButton:(id)sender
+{
+    
+}
+/* 提现到银行卡 */
+- (void)drawMoneyToBankCardButton:(id)sender
+{
+    
+}
+- (void)drawViewRemove
+{
+    [aliPayView removeFromSuperview];
+    [bankView removeFromSuperview];
+    [recordView removeFromSuperview];
+}
+#pragma mark ------- tableView delegate
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    return 10;
+}
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    return 80;
+}
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    static NSString * celled = @"celled";
+    DrawMoneyRecordViewCell * cell =(DrawMoneyRecordViewCell*) [tableView dequeueReusableCellWithIdentifier:celled];
+    if (cell == nil) {
+        cell =[[DrawMoneyRecordViewCell alloc]initWithStyle:UITableViewCellStyleDefault reuseIdentifier:celled];
+
+    }
+    switch (indexPath.row) {
+        case 0:
+             cell.cellState = @"0";
+            break;
+        case 1:
+             cell.cellState = @"1";
+            break;
+        case 2:
+             cell.cellState = @"2";
+            break;
+        case 3:
+            cell.cellState = @"3";
+            break;
+        default:
+            break;
+    }
+    [cell refreshCellView];
+    return cell;
+    
+}
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+@end

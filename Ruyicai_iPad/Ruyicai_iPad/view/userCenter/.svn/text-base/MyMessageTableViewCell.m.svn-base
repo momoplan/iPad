@@ -1,0 +1,60 @@
+//
+//  MyMessageTableViewCell.m
+//  Ruyicai_iPad
+//
+//  Created by baozi on 13-7-30.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+#import "MyMessageTableViewCell.h"
+
+@implementation MyMessageTableViewCell
+@synthesize replyStateString;
+@synthesize model;
+- (id)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier
+{
+    self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
+    if (self) {
+        // Initialization code
+        
+        timeLabel =[[UILabel alloc]initWithFrame:CGRectMake(20, 10, 240, 20)];
+        [self.contentView addSubview:timeLabel];
+        
+        questionLabel =[[UILabel alloc]initWithFrame:CGRectMake(timeLabel.frame.origin.x + timeLabel.frame.size.width, timeLabel.frame.origin.y, 300, 20)];
+        questionLabel.textColor = [UIColor redColor];
+        [self.contentView addSubview:questionLabel];
+        
+        UILabel *reLabel =[[UILabel alloc]initWithFrame:CGRectMake(20, 40, 90, 20)];
+        reLabel.text =@"客服回复:";
+        [self.contentView addSubview:reLabel];
+        [reLabel release];
+        
+        replyLabel = [[UILabel alloc]initWithFrame:CGRectMake(reLabel.frame.origin.x+reLabel.frame.size.width, reLabel.frame.origin.y, 400, 20)];
+        replyLabel.textColor =[UIColor greenColor];
+        [self.contentView addSubview:replyLabel];
+    }
+    return self;
+}
+- (void)dealloc
+{
+    [super dealloc];
+    [timeLabel release];
+    [questionLabel release];
+    [replyLabel release];
+
+}
+- (void)messageTableCellRefresh
+{
+    timeLabel.text =[NSString stringWithFormat: @"我于 %@ 的留言:",model.createTime];
+    questionLabel.text = model.content;
+    replyLabel.text = model.reply;
+
+}
+- (void)setSelected:(BOOL)selected animated:(BOOL)animated
+{
+    [super setSelected:selected animated:animated];
+
+    // Configure the view for the selected state
+}
+
+@end

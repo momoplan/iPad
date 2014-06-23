@@ -1,0 +1,83 @@
+//
+//  RootViewController.m
+//  Ruyicai_iPad
+//
+//  Created by baozi on 13-6-27.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+#import "RootViewController.h"
+
+@interface RootViewController ()
+
+@end
+
+@implementation RootViewController
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+    }
+    return self;
+}
+
+- (void)dealloc{
+    [super dealloc];
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    
+    // Do any additional setup after loading the view from its nib.
+    
+}
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+#pragma mark ------- test
+- (void)nslogViewRect :(UIView *)view viewTitle:(NSString *)title
+{
+    CGRect rect = view.frame;
+    NSLog(@" title%@ view the  rect \n rect.origin.x %f,rect.origin.y %f,rect.size.height %f, rect.size.width%f",title,rect.origin.x ,rect.origin.y ,rect.size.height,rect.size.width);
+}
+/*  不重复的随机数 */
+- (NSMutableArray*)randomBallWithMax:(int)maxNum selectNum:(int)select_ran
+{
+    NSMutableArray *randomArray=[[NSMutableArray alloc]init];
+    for (int i =0; i<maxNum; i++) {
+        [randomArray addObject:@"0"];
+    }
+    int m_randomNum = 0;
+    int max_random = maxNum;
+    int select_random = select_ran;
+    
+    while (m_randomNum < select_random) {
+        int randomNum = (arc4random() % max_random);
+        
+        if (![[randomArray objectAtIndex:randomNum]isEqualToString:@"1"]) {
+            [randomArray replaceObjectAtIndex:randomNum withObject:@"1"];
+            m_randomNum += 1;
+        }
+    }
+    return randomArray;
+}
+/* 提示信息 */
+-(void)showAlertWithMessage:(NSString *)message
+{
+    UIAlertView *alert =[[UIAlertView alloc]initWithTitle:@"提示" message:message delegate:self cancelButtonTitle:@"确定" otherButtonTitles:nil];
+    [alert show];
+    [alert release];
+}
+
+/*  是否成功登陆 */
+- (BOOL)isSuccessLogin
+{
+    return [UserLoginData sharedManager].hasLogin ? YES :NO;
+}
+@end

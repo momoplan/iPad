@@ -1,0 +1,32 @@
+//
+//  RootViewController.h
+//  Ruyicai_iPad
+//
+//  Created by baozi on 13-6-27.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+#import "RYCImageNamed.h"
+@interface RootViewController : UIViewController
+<UIAlertViewDelegate,UITableViewDelegate,UITableViewDataSource>
+{
+    
+    
+}
+/*
+ 测试打印 view的 尺寸参数
+ */
+- (void)nslogViewRect :(UIView *)view viewTitle:(NSString *)title;
+/*
+ 产生随机数 数组
+ maxNum 最大数 select_ran 随机数个数
+ 
+ */
+- (NSMutableArray *)randomBallWithMax:(int)maxNum selectNum:(int)select_ran;
+
+///警告框
+-(void)showAlertWithMessage:(NSString *)message;
+/* 是否成功登陆 */
+- (BOOL)isSuccessLogin;
+@end

@@ -1,0 +1,195 @@
+//
+//  BingingIDCardViewController.m
+//  Ruyicai_iPad
+//
+//  Created by baozi on 13-8-8.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+#import "BingingIDCardViewController.h"
+
+@interface BingingIDCardViewController ()
+
+@end
+
+@implementation BingingIDCardViewController
+@synthesize delegate;
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+    }
+    return self;
+}
+#pragma mark ----------- view methods
+- (void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(requestComplete:) name:KRequestCompNotName object:nil];
+}
+- (void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:KRequestCompNotName object:nil];
+    
+}
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    // Do any additional setup after loading the view from its nib.
+}
+- (void)dealloc {
+    [_bingCardTextField release];
+    [_bingCardTextName release];
+    self.delegate = nil;
+    [super dealloc];
+    
+}
+
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+#pragma mark ------------- notification methods
+- (void)requestComplete:(NSNotification*)notification
+{
+    NSDictionary* dataDic = (NSDictionary*)notification.userInfo;
+    DLog(@" 绑定手机号   -------- %@",dataDic);
+    int reqType = [[dataDic objectForKey:KRequestTypeKey] integerValue];
+    switch (reqType) {
+        case ASINetworkReqestTypeBindCertid:
+        {
+            NSString * errorCode =KISDictionaryHaveKey(dataDic, @"error_code");
+            NSString * message = KISDictionaryHaveKey(dataDic, @"message");
+            if ([errorCode isEqualToString:@"0000"]) {
+                [self  showAlertWithMessage:message];
+                [self dismissModalViewControllerAnimated:YES];
+                [self.delegate bingingIDCardOperateSucceed];
+            }else
+            {
+                [self showAlertWithMessage:message];
+            }
+        }
+            break;
+        default:
+            break;
+    }
+    
+}
+#pragma mark ------------- xib methods
+- (IBAction)bingCDCardCancalButton:(id)sender {//取消
+    [self dismissModalViewControllerAnimated:YES];
+}
+- (IBAction)bingCDCardConfirmButton:(id)sender {//确定
+    if (_bingCardTextField.text.length != 15 && _bingCardTextField.text.length !=18) {
+            [self showAlertWithMessage:@"身份证号位数有误！\n请重新输入"];
+            return;
+        }
+    
+    if (_bingCardTextName.text.length == 0) {
+        [self showAlertWithMessage:@"请输入真实姓名!"];
+        return;
+    }
+    if (_bingCardTextField.text.length == 18) {
+        if (![self birthDayIScorrect:_bingCardTextField.text]) {
+            [self showAlertWithMessage:@"您输入的身份证号格式有误，请重新输入！"];
+            return;
+        }
+    }
+    if (![self nameIScorrect:_bingCardTextName.text]) {
+        [self showAlertWithMessage:@"您输入的姓名格式有误，请重新输入！"];
+        return;
+    }
+    
+    NSMutableDictionary* mDict = [[NSMutableDictionary alloc]init];
+    [mDict setObject:@"updateUserInfo" forKey:@"command"];
+    [mDict setObject:_bingCardTextField.text forKey:@"certid"];
+    [mDict setObject:_bingCardTextName.text forKey:@"name"];
+	[mDict setObject:[UserLoginData sharedManager].userNo forKey:@"userno"];
+    
+    [[RYCNetworkManager sharedManager] netRequestStartWith:mDict withRequestType:ASINetworkReqestTypeBindCertid showProgress:YES];
+    
+}
+/* 身份证 格式验证 */
+- (BOOL)birthDayIScorrect:(NSString*)birthday
+{
+    for (int i = 0; i < birthday.length; i++) {
+        UniChar chr = [birthday characterAtIndex:i];
+        if (i != birthday.length - 1) {
+            if (chr < '0' || chr > '9')
+            {
+                return NO;
+            }
+        }
+        else
+        {
+            if (chr < '0' || chr > '9')
+            {
+                if (chr != 'x' && chr != 'X') {
+                    return NO;
+                }
+            }
+        }
+        
+    }
+    NSString* year = [birthday substringWithRange:NSMakeRange(6, 4)];
+    if ([year intValue] < 1900) {
+        return NO;
+    }
+    NSString* mouth = [birthday substringWithRange:NSMakeRange(10, 2)];
+    if ([mouth intValue] < 1 || [mouth intValue] > 12) {
+        return NO;
+    }
+    NSString* day = [birthday substringWithRange:NSMakeRange(12, 2)];
+    if ([day intValue] < 1 || [day intValue] > 31) {
+        return NO;
+    }
+    return YES;
+}
+/*  姓名格式 验证 */
+- (BOOL)nameIScorrect:(NSString*)name
+{
+    //    int utfCode = 0;
+    //    void *buffer = &utfCode;
+    //    NSRange range = NSMakeRange(name.length - 1, 1);
+    //    NSString *word = [name substringWithRange:range];
+    //    BOOL b = [word getBytes:buffer maxLength:2 usedLength:NULL encoding:NSUTF16LittleEndianStringEncoding options:NSStringEncodingConversionExternalRepresentation range:range remainingRange:NULL];
+    //    if (b && (utfCode >= 0x4e00 && utfCode <= 0x9fa5)) {//unicode中文编码范围是0x4e00~0x9fa5  也有用u4e00~u9fff
+    //        return YES;
+    //    }
+    //    return NO;
+    if (name.length > 16 || name.length < 2) {//长度2-16
+        return NO;
+    }
+    for (int j = 0; j < name.length; j ++) {
+        UniChar chr = [name characterAtIndex:j];
+        if(chr < 0x4e00 || chr > 0x9fa5)
+        {
+            if (![[name substringWithRange:NSMakeRange(j, 1)] isEqualToString:@"•"] && ![[name substringWithRange:NSMakeRange(j, 1)] isEqualToString:@"·"]) {
+                return NO;
+            }
+            //            if (chr != 0x2022) {//不为分格符 •
+            //                return NO;
+            //            }
+        }
+    }
+    return YES;
+}
+#pragma mark ------------- textField delegate
+- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string
+{
+    return YES;
+}
+- (BOOL)textFieldShouldBeginEditing:(UITextField *)textField
+{
+    return YES;
+}
+- (BOOL)textFieldShouldEndEditing:(UITextField *)textField
+{
+    return YES;
+}
+
+@end

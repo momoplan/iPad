@@ -1,0 +1,19 @@
+//
+//  DrawMoneyRecordViewCell.h
+//  Ruyicai_iPad
+//
+//  Created by baozi on 13-7-23.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+
+@interface DrawMoneyRecordViewCell : UITableViewCell
+{
+    UILabel *stateLabel;
+    UIButton * cancelBtn;
+}
+@property (nonatomic,retain) NSString *cellState;
+
+- (void)refreshCellView;
+@end

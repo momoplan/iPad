@@ -1,0 +1,43 @@
+//
+//  RegisterViewController.h
+//  Ruyicai_iPad
+//
+//  Created by baozi on 13-6-28.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+#import "RootViewController.h"
+
+@protocol RegisterViewDelegate <NSObject>
+
+- (void)registerViewSuccessRegisterUserName:(NSString *)userName passWord:(NSString *)passWord;
+
+@end
+
+
+@interface RegisterViewController : RootViewController
+<UITextFieldDelegate>
+{
+    
+}
+
+@property (nonatomic,retain) id<RegisterViewDelegate>   delegate;
+@property (nonatomic, retain) IBOutlet UILabel          * titleLabel;
+@property (nonatomic, retain) IBOutlet UIScrollView     * myScroll;
+
+@property (retain, nonatomic) IBOutlet UITextField      * addUserNameTextField;
+@property (retain, nonatomic) IBOutlet UITextField      * addUserPassWordTextField;
+@property (retain, nonatomic) IBOutlet UITextField      * againUserPassWordTextField;
+
+@property (retain, nonatomic) IBOutlet UISwitch         * bingingSwitch;
+
+@property (retain, nonatomic) IBOutlet UITextField      * userRealNameTextField;
+@property (retain, nonatomic) IBOutlet UITextField      * userIDCardTextField;
+@property (retain, nonatomic) IBOutlet UIView           * realRegisterView;
+
+@property (retain, nonatomic) IBOutlet UIView           * bingingView;
+
+@property (retain, nonatomic) IBOutlet UIButton         * agreeProButton;
+
+@property (retain, nonatomic) IBOutlet UIView           * protocolView;
+@end

@@ -1,0 +1,29 @@
+//
+//  IntegralDetailViewController.h
+//  Ruyicai_iPad
+//
+//  Created by baozi on 13-7-24.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+#import "RootViewController.h"
+#import "integralDetailViewContollerCell.h"
+
+@class IntegralDetailViewController;
+@protocol IntegralDetailViewContorollerDelegate <NSObject>
+
+- (void)integralDetailViewDisappear:(IntegralDetailViewController *)viewController;
+
+@end
+
+
+@interface IntegralDetailViewController : RootViewController
+<UITableViewDataSource,UITableViewDelegate>
+{
+    UITableView *intTableView;
+    UITextField *useTextField;//积分输入框
+}
+@property (nonatomic,retain) NSString * userScore;
+@property (nonatomic,retain) NSMutableArray * integralDataArray;
+@property (nonatomic,assign) id<IntegralDetailViewContorollerDelegate>delegate;
+@end

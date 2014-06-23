@@ -1,0 +1,57 @@
+//
+//  AccountDetailTabelViewCell.m
+//  Ruyicai_iPad
+//
+//  Created by baozi on 13-7-24.
+//  Copyright (c) 2013年 baozi. All rights reserved.
+//
+
+#import "AccountDetailTabelViewCell.h"
+
+@implementation AccountDetailTabelViewCell
+@synthesize model;
+- (id)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier
+{
+    self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
+    if (self) {
+        // Initialization code
+    }
+    return self;
+}
+- (void)dealloc{
+    [super dealloc];
+    [model release],model = nil;
+}
+- (void)setSelected:(BOOL)selected animated:(BOOL)animated
+{
+    [super setSelected:selected animated:animated];
+
+    // Configure the view for the selected state
+}
+#pragma mark ----------- contentView
+- (void)accountCellContentView
+{
+    UILabel * typeLabel =[[UILabel alloc]initWithFrame:CGRectMake(10, 10, 200, 25)];
+    typeLabel.text = model.memo;
+    [self.contentView addSubview:typeLabel];
+    [typeLabel release];
+    
+    UILabel *monLabel =[[UILabel alloc]initWithFrame:CGRectMake(300, 10, 200, 25)];
+    if ([model.blsign isEqualToString:@"-1"]) {
+        monLabel.text = [NSString stringWithFormat:@"-%@",model.amt];
+        monLabel.textColor =[UIColor greenColor];
+    }else
+    {
+        monLabel.text = [NSString stringWithFormat:@"+%@",model.amt];
+        monLabel.textColor =[UIColor redColor];
+    }
+
+    [self.contentView addSubview:monLabel];
+    [monLabel release];
+    
+    UILabel *timeLabel =[[UILabel alloc]initWithFrame:CGRectMake(700, 10, 200, 25)];
+    timeLabel.text = model.platTime;
+    [self.contentView addSubview:timeLabel];
+    [timeLabel release];
+}
+@end
