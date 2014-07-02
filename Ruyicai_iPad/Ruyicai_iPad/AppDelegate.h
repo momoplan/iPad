@@ -7,6 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "MobClick.h"
 
 @interface AppDelegate : UIResponder <UIApplicationDelegate>
 

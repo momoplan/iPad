@@ -84,6 +84,7 @@ static RuYiCaiLotDetail *s_lotDetail = NULL;
 			[[self alloc] init];  //assignment not done here
 		}
 	}
+    
 	return s_lotDetail;
 }
 

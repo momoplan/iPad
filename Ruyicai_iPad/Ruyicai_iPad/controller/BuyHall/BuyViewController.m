@@ -35,6 +35,12 @@
     [super dealloc];
 
 }
+
+- (void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+    [MobClick endLogPageView:@"你好"];
+}
 - (void)viewDidLoad
 {
     [super viewDidLoad];
@@ -48,15 +54,15 @@
     [self addKindsOfTicketView];
     
     [self getTopNewsContent];
-    
+    [MobClick setLogEnabled:YES];//打开调试模式，打开调试模式之后可以在log中查看数据是否发送到友盟的服务器上以及集成工过程中出现的错误原因等
     
 
 }
 - (void)viewWillAppear:(BOOL)animated
 {
-    [super viewWillAppear:animated];
-
     [self requestTodayOpenOrAdd];
+    [super viewWillAppear:animated];
+    [MobClick beginLogPageView:@"你好"];//友盟
 }
 - (void)viewDidAppear:(BOOL)animated; 
 {

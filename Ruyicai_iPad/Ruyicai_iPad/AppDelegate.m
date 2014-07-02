@@ -21,7 +21,12 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
-       //开机联网
+    //友盟分享的内容
+    [MobClick startWithAppkey:@"53b20dc856240becb905c445" reportPolicy:SENDDAILY channelId:kRuYiCaiCoopid];
+    
+    NSString *verson = [[[NSBundle mainBundle]infoDictionary]objectForKey:@"CFBundleShortVersionString"];
+    [MobClick setAppVersion:verson];
+    //开机联网
     NSMutableDictionary* mDict = [NSMutableDictionary dictionaryWithCapacity:1];
     [mDict setObject:@"softwareupdate" forKey:@"command"];
     //自动登录

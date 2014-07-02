@@ -16,6 +16,7 @@
 #import "GD11X5PickNumerViewController.h" // 广东11选5
 #import "BuyAdShowViewController.h"
 #import "LoginViewController.h"
+#import "MobClick.h"//友盟
 
 @interface BuyViewController : RootViewController
 <RYNarBarViewDelegate,TicketKindDelegate,DLT_PickNumberViewDelegate,
