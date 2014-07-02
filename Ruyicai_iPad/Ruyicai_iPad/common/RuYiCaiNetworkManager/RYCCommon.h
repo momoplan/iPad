@@ -10,13 +10,13 @@
 #import "UserLoginData.h"
 
 //测试 接口  http://192.168.0.42:80
-#define kRuYiCaiServer   @"http://www.ruyicai.com/lotserver/RuyicaiServlet"
-#define kRuYiCaiBetSafari   @"http://www.ruyicai.com/lotserver/log/betConfirm.jsp?jsonString="
-#define kRuYiCaiHMSafari    @"http://www.ruyicai.com/lotserver/log/betCaseConfirm.jsp?jsonString="
+//#define kRuYiCaiServer   @"http://www.ruyicai.com/lotserver/RuyicaiServlet"
+//#define kRuYiCaiBetSafari   @"http://www.ruyicai.com/lotserver/log/betConfirm.jsp?jsonString="
+//#define kRuYiCaiHMSafari    @"http://www.ruyicai.com/lotserver/log/betCaseConfirm.jsp?jsonString="
 
-//#define kRuYiCaiServer   @"http://202.43.152.173:8099/lotserver/RuyicaiServlet"
-//#define kRuYiCaiBetSafari   @"http://202.43.152.173:8099/lotserver/log/betConfirm.jsp?jsonString="
-//#define kRuYiCaiHMSafari    @"http://202.43.152.173:8099/lotserver/log/betCaseConfirm.jsp?jsonString="
+#define kRuYiCaiServer   @"http://202.43.152.173:8099/lotserver/RuyicaiServlet"
+#define kRuYiCaiBetSafari   @"http://202.43.152.173:8099/lotserver/log/betConfirm.jsp?jsonString="
+#define kRuYiCaiHMSafari    @"http://202.43.152.173:8099/lotserver/log/betCaseConfirm.jsp?jsonString="
 
 #define kRuYiCaiCharge   @"http://wap.ruyicai.com/w/wap/iphoneCharge.jspx"
 

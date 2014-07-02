@@ -44,6 +44,9 @@
 //        self.window.frame =  CGRectMake(20.0f,0.0f,self.window.frame.size.width,self.window.frame.size.height);
 //    }
     
+    [[UIApplication sharedApplication] registerForRemoteNotificationTypes:
+     (UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound | UIRemoteNotificationTypeAlert)];
+
     [self.window makeKeyAndVisible];
     [controller release];
 
