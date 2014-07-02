@@ -9,7 +9,8 @@
 #import "RYCNetworkManager.h"
 #import "UserLoginData.h"
 
-//正式性数据 接口  http://192.168.0.42:80
+
+//测试 接口  http://192.168.0.42:80
 //#define kRuYiCaiServer   @"http://www.ruyicai.com/lotserver/RuyicaiServlet"
 //#define kRuYiCaiBetSafari   @"http://www.ruyicai.com/lotserver/log/betConfirm.jsp?jsonString="
 //#define kRuYiCaiHMSafari    @"http://www.ruyicai.com/lotserver/log/betCaseConfirm.jsp?jsonString="
